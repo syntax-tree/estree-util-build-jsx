@@ -1,0 +1,178 @@
+# estree-util-build-jsx
+
+[![Build][build-badge]][build]
+[![Coverage][coverage-badge]][coverage]
+[![Downloads][downloads-badge]][downloads]
+[![Size][size-badge]][size]
+
+Transform JSX to function calls: `<x />` -> `h('x')`!
+
+There is currently one project actively maintained that can transform JSX to
+function calls: Babel.
+Babel is amazing but ginormous (±300kb) and slow.
+Switching from it to [estree][] in a project where Babel was only a small part
+made the whole project [**68% smaller and 63% faster**][pr].
+So let’s make that two implementations.
+
+## Install
+
+[npm][]:
+
+```sh
+npm install estree-util-build-jsx
+```
+
+## Use
+
+Say we have the following file, `example.jsx`:
+
+```js
+var x = require('xastscript')
+
+console.log(
+  <album id={123}>
+    <name>Born in the U.S.A.</name>
+    <artist>Bruce Springsteen</artist>
+    <releasedate date="1984-04-06">April 6, 1984</releasedate>
+  </album>
+)
+
+console.log(
+  <>
+    {1 + 1}
+    <self-closing />
+    <x name key="value" key={expression} {...spread} />
+  </>
+)
+```
+
+And our script, `example.js`, looks as follows:
+
+```js
+var fs = require('fs')
+var acorn = require('acorn')
+var jsx = require('acorn-jsx')
+var astring = require('astring')
+var build = require('estree-util-build-jsx')
+
+var doc = fs.readFileSync('example.jsx')
+
+var tree = acorn.Parser.extend(jsx()).parse(doc)
+
+build(tree, {pragma: 'x', pragmaFrag: 'null'})
+
+console.log(astring.generate(tree))
+```
+
+Now, running `node example` yields:
+
+```js
+var x = require('xastscript');
+console.log(x("album", {
+  id: 123
+}, x("name", null, "Born in the U.S.A."), x("artist", null, "Bruce Springsteen"), x("releasedate", {
+  date: "1984-04-06"
+}, "April 6, 1984")));
+console.log(x(null, null, 1 + 1, x("self-closing"), x("x", Object.assign({
+  name: true,
+  key: "value",
+  key: expression
+}, spread))));
+```
+
+## API
+
+### `buildJsx(tree, options?)`
+
+Turn JSX in `tree` ([`Program`][program]) into hyperscript calls.
+
+##### `options`
+
+###### `options.pragma`
+
+Identifier or member expression to call (`string`, default: a comment with
+`@jsx\s+(\S+)` or `'React.createElement'`).
+
+###### `options.pragmaFrag`
+
+Identifier or member expression to use as a symbol for fragments (`string`,
+default: a comment with `@jsxFrag\s+(\S+)` or `'React.Fragment'`).
+
+###### Returns
+
+`Node` — The given `tree`.
+
+###### Notes
+
+To support `pragma`, `pragmaFrag` from comments, those comments have to be
+in the program.
+This is done automatically by [`espree`][espree].
+For [`acorn`][acorn], it can be done like so:
+
+```js
+var acorn = require('acorn')
+var jsx = require('acorn-jsx')
+
+var comments = []
+var tree = acorn.Parser.extend(jsx()).parse(doc, {onComment: comments})
+tree.comments = comments
+```
+
+In almost all cases, this utility is the same as the babel plugin, except that
+they work on slightly different syntax trees.
+
+Some differences:
+
+*   Only a classic runtime, so no `runtime` option, `importSource` option, or
+    `@jsxImportSource` comment
+*   No pure annotations or dev things
+*   `this` is not a component: `<this>` -> `h("this")`, not `h(this)`
+*   Namespaces are supported: `<a:b c:d>` -> `h("a:b", {"c:d": true})`,
+    which throws by default in Babel or can be turned on with `throwIfNamespace`
+*   No `useSpread`, `useBuiltIns`, or `filter` options
+
+## Related
+
+*   [`syntax-tree/hast-util-to-estree`](https://github.com/syntax-tree/hast-util-to-estree)
+    — Transform [hast](https://github.com/syntax-tree/hast) (HTML) to [estree][]
+    JSX
+*   [`coderaiser/estree-to-babel`](https://github.com/coderaiser/estree-to-babel)
+    — Transform [estree][] to Babel trees
+
+## License
+
+[MIT][license] © [Titus Wormer][author]
+
+<!-- Definitions -->
+
+[build-badge]: https://github.com/wooorm/estree-util-build-jsx/workflows/main/badge.svg
+
+[build]: https://github.com/wooorm/estree-util-build-jsx/actions
+
+[coverage-badge]: https://img.shields.io/codecov/c/github/wooorm/estree-util-build-jsx.svg
+
+[coverage]: https://codecov.io/github/wooorm/estree-util-build-jsx
+
+[downloads-badge]: https://img.shields.io/npm/dm/estree-util-build-jsx.svg
+
+[downloads]: https://www.npmjs.com/package/estree-util-build-jsx
+
+[size-badge]: https://img.shields.io/bundlephobia/minzip/estree-util-build-jsx.svg
+
+[size]: https://bundlephobia.com/result?p=estree-util-build-jsx
+
+[npm]: https://docs.npmjs.com/cli/install
+
+[license]: license
+
+[author]: https://wooorm.com
+
+[acorn]: https://github.com/acornjs/acorn
+
+[estree]: https://github.com/estree/estree
+
+[espree]: https://github.com/eslint/espree
+
+[program]: https://github.com/estree/estree/blob/master/es5.md#programs
+
+[pr]: https://github.com/mdx-js/mdx/pull/1399
