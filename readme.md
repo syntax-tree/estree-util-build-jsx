@@ -88,15 +88,30 @@ Turn JSX in `tree` ([`Program`][program]) into hyperscript calls.
 
 ##### `options`
 
+###### `options.runtime`
+
+Choose the [runtime][].
+(`string`, `'automatic'` or `'classic'`, default: `'classic'`).
+Comment form: `@jsxRuntime theRuntime`.
+
+###### `options.importSource`
+
+Place to import `jsx`, `jsxs`, and/or `Fragment` from, when the effective
+runtime is automatic (`string`, default: `'react'`).
+Comment: `@jsxImportSource theSource`.
+Note that `/jsx-runtime` is appended to this provided source.
+
 ###### `options.pragma`
 
-Identifier or member expression to call (`string`, default: a comment with
-`@jsx\s+(\S+)` or `'React.createElement'`).
+Identifier or member expression to call when the effective runtime is classic
+(`string`, default: `'React.createElement'`).
+Comment: `@jsx identifier`.
 
 ###### `options.pragmaFrag`
 
-Identifier or member expression to use as a symbol for fragments (`string`,
-default: a comment with `@jsxFrag\s+(\S+)` or `'React.Fragment'`).
+Identifier or member expression to use as a sumbol for fragments when the
+effective runtime is classic (`string`, default: `'React.Fragment'`).
+Comment: `@jsxFrag identifier`.
 
 ###### Returns
 
@@ -104,8 +119,8 @@ default: a comment with `@jsxFrag\s+(\S+)` or `'React.Fragment'`).
 
 ###### Notes
 
-To support `pragma`, `pragmaFrag` from comments, those comments have to be
-in the program.
+To support configuration from comments, those comments have to be in the
+program.
 This is done automatically by [`espree`][espree].
 For [`acorn`][acorn], it can be done like so:
 
@@ -123,11 +138,9 @@ they work on slightly different syntax trees.
 
 Some differences:
 
-*   Only a classic runtime, so no `runtime` option, `importSource` option, or
-    `@jsxImportSource` comment
 *   No pure annotations or dev things
-*   `this` is not a component: `<this>` -> `h("this")`, not `h(this)`
-*   Namespaces are supported: `<a:b c:d>` -> `h("a:b", {"c:d": true})`,
+*   `this` is not a component: `<this>` -> `h('this')`, not `h(this)`
+*   Namespaces are supported: `<a:b c:d>` -> `h('a:b', {'c:d': true})`,
     which throws by default in Babel or can be turned on with `throwIfNamespace`
 *   No `useSpread`, `useBuiltIns`, or `filter` options
 
@@ -176,3 +189,5 @@ Some differences:
 [program]: https://github.com/estree/estree/blob/master/es5.md#programs
 
 [pr]: https://github.com/mdx-js/mdx/pull/1399
+
+[runtime]: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html

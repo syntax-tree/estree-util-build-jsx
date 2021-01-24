@@ -79,6 +79,38 @@ test('estree-util-build-jsx', function (t) {
     'should support `@jsx`, `@jsxFrag` comments'
   )
 
+  t.throws(
+    function () {
+      build(parse('/* @jsx a @jsxRuntime automatic */'))
+    },
+    /Unexpected `@jsx` pragma w\/ automatic runtime/,
+    'should throw when `@jsx` is set in the automatic runtime'
+  )
+
+  t.throws(
+    function () {
+      build(parse('/* @jsxFrag a @jsxRuntime automatic */'))
+    },
+    /Unexpected `@jsxFrag` pragma w\/ automatic runtime/,
+    'should throw when `@jsxFrag` is set in the automatic runtime'
+  )
+
+  t.throws(
+    function () {
+      build(parse('/* @jsxImportSource a @jsxRuntime classic */'))
+    },
+    /Unexpected `@jsxImportSource` w\/ classic runtime/,
+    'should throw when `@jsxImportSource` is set in the classic runtime'
+  )
+
+  t.throws(
+    function () {
+      build(parse('/* @jsxRuntime a */'))
+    },
+    /Unexpected `jsxRuntime` `a`, expected `automatic` or `classic`/,
+    'should throw on a non-automatic nor classic `@jsxRuntime`'
+  )
+
   t.deepEqual(
     build(parse('// a\n<><x /></>')).body[0].expression,
     {
@@ -912,6 +944,114 @@ test('estree-util-build-jsx', function (t) {
       sourceType: 'script'
     },
     'should support no comments on `program`'
+  )
+
+  t.deepEqual(
+    astring.generate(build(parse('<>a</>'), {runtime: 'automatic'})),
+    [
+      'import {Fragment as _Fragment, jsx as _jsx} from "react/jsx-runtime";',
+      '_jsx(_Fragment, {',
+      '  children: "a"',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (fragment, jsx, settings)'
+  )
+
+  t.deepEqual(
+    astring.generate(
+      build(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))
+    ),
+    [
+      'import {jsxs as _jsxs} from "react/jsx-runtime";',
+      '_jsxs("a", {',
+      '  children: ["b", 1]',
+      '}, "a");',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (jsxs, key, comment)'
+  )
+
+  t.deepEqual(
+    astring.generate(
+      build(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})
+    ),
+    [
+      'import {jsx as _jsx} from "react/jsx-runtime";',
+      '_jsx("a", Object.assign({',
+      '  b: "1"',
+      '}, c, {',
+      '  children: "d"',
+      '}));',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (props, spread, children)'
+  )
+
+  t.deepEqual(
+    astring.generate(
+      build(parse('<a {...{b: 1, c: 2}} d="e">f</a>'), {runtime: 'automatic'})
+    ),
+    [
+      'import {jsx as _jsx} from "react/jsx-runtime";',
+      '_jsx("a", Object.assign({',
+      '  b: 1,',
+      '  c: 2',
+      '}, {',
+      '  d: "e",',
+      '  children: "f"',
+      '}));',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (spread, props, children)'
+  )
+
+  t.deepEqual(
+    astring.generate(build(parse('<a>b</a>'), {runtime: 'automatic'})),
+    [
+      'import {jsx as _jsx} from "react/jsx-runtime";',
+      '_jsx("a", {',
+      '  children: "b"',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (no props, children)'
+  )
+
+  t.deepEqual(
+    astring.generate(build(parse('<a/>'), {runtime: 'automatic'})),
+    [
+      'import {jsx as _jsx} from "react/jsx-runtime";',
+      '_jsx("a", {});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (no props, no children)'
+  )
+
+  t.deepEqual(
+    astring.generate(build(parse('<a key/>'), {runtime: 'automatic'})),
+    [
+      'import {jsx as _jsx} from "react/jsx-runtime";',
+      '_jsx("a", {}, true);',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (key, no props, no children)'
+  )
+
+  t.throws(
+    function () {
+      build(parse('<a {...b} key/>'), {runtime: 'automatic'})
+    },
+    /Expected `key` to come before any spread expressions/,
+    'should throw on spread after `key`'
+  )
+
+  t.deepEqual(
+    astring.generate(
+      build(parse('/*@jsxRuntime classic*/ <a/>'), {runtime: 'automatic'})
+    ),
+    'React.createElement("a");\n',
+    'should prefer a `jsxRuntime` comment over a `runtime` option'
   )
 
   t.end()

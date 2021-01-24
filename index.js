@@ -5,10 +5,13 @@ module.exports = buildJsx
 var walk = require('estree-walker').walk
 var isIdentifierName = require('estree-util-is-identifier-name').name
 
+var regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
+
 function buildJsx(tree, options) {
   var settings = options || {}
-  var pragma = settings.pragma
-  var pragmaFrag = settings.pragmaFrag
+  var automatic = settings.runtime === 'automatic'
+  var annotations = {}
+  var imports = {}
 
   walk(tree, {enter: enter, leave: leave})
 
@@ -26,12 +29,36 @@ function buildJsx(tree, options) {
       index = -1
 
       while (++index < comments.length) {
-        if ((match = /@jsx\s+(\S+)/.exec(comments[index].value))) {
-          pragma = match[1]
-        }
+        regex.lastIndex = 0
 
-        if ((match = /@jsxFrag\s+(\S+)/.exec(comments[index].value))) {
-          pragmaFrag = match[1]
+        while ((match = regex.exec(comments[index].value))) {
+          annotations[match[1]] = match[2]
+        }
+      }
+
+      if (annotations.jsxRuntime) {
+        if (annotations.jsxRuntime === 'automatic') {
+          automatic = true
+
+          if (annotations.jsx) {
+            throw new Error('Unexpected `@jsx` pragma w/ automatic runtime')
+          }
+
+          if (annotations.jsxFrag) {
+            throw new Error('Unexpected `@jsxFrag` pragma w/ automatic runtime')
+          }
+        } else if (annotations.jsxRuntime === 'classic') {
+          automatic = false
+
+          if (annotations.jsxImportSource) {
+            throw new Error('Unexpected `@jsxImportSource` w/ classic runtime')
+          }
+        } else {
+          throw new Error(
+            'Unexpected `jsxRuntime` `' +
+              annotations.jsxRuntime +
+              '`, expected `automatic` or `classic`'
+          )
         }
       }
     }
@@ -41,6 +68,7 @@ function buildJsx(tree, options) {
   // eslint-disable-next-line complexity
   function leave(node) {
     var parameters
+    var children
     var fields
     var objects
     var index
@@ -48,12 +76,62 @@ function buildJsx(tree, options) {
     var name
     var props
     var attributes
+    var spread
+    var key
+    var callee
+    var specifiers
+    var prop
+
+    if (node.type === 'Program') {
+      specifiers = []
+
+      if (imports.fragment) {
+        specifiers.push({
+          type: 'ImportSpecifier',
+          imported: {type: 'Identifier', name: 'Fragment'},
+          local: {type: 'Identifier', name: '_Fragment'}
+        })
+      }
+
+      if (imports.jsx) {
+        specifiers.push({
+          type: 'ImportSpecifier',
+          imported: {type: 'Identifier', name: 'jsx'},
+          local: {type: 'Identifier', name: '_jsx'}
+        })
+      }
+
+      if (imports.jsxs) {
+        specifiers.push({
+          type: 'ImportSpecifier',
+          imported: {type: 'Identifier', name: 'jsxs'},
+          local: {type: 'Identifier', name: '_jsxs'}
+        })
+      }
+
+      if (specifiers.length) {
+        node.body.unshift({
+          type: 'ImportDeclaration',
+          specifiers: specifiers,
+          source: {
+            type: 'Literal',
+            value:
+              (annotations.jsxImportSource ||
+                settings.importSource ||
+                'react') + '/jsx-runtime'
+          }
+        })
+      }
+    }
 
     if (node.type !== 'JSXElement' && node.type !== 'JSXFragment') {
       return
     }
 
     parameters = []
+    children = []
+    objects = []
+    fields = []
     index = -1
 
     // Figure out `children`.
@@ -86,22 +164,20 @@ function buildJsx(tree, options) {
       }
       // Otherwise, this is an already compiled call.
 
-      parameters.push(child)
+      children.push(child)
     }
 
     // Do the stuff needed for elements.
     if (node.openingElement) {
       name = toIdentifier(node.openingElement.name)
 
-      // If the name could be an identifier, but start with something other than
-      // a lowercase letter, it’s not a component.
+      // If the name could be an identifier, but start with a lowercase letter,
+      // it’s not a component.
       if (name.type === 'Identifier' && /^[a-z]/.test(name.name)) {
         name = create(name, {type: 'Literal', value: name.name})
       }
 
       attributes = node.openingElement.attributes
-      objects = []
-      fields = []
       index = -1
 
       // Place props in the right order, because we might have duplicates
@@ -114,38 +190,92 @@ function buildJsx(tree, options) {
           }
 
           objects.push(attributes[index].argument)
+          spread = true
         } else {
-          fields.push(toProperty(attributes[index]))
-        }
-      }
+          prop = toProperty(attributes[index])
 
-      if (fields.length) {
-        objects.push({type: 'ObjectExpression', properties: fields})
-      }
+          if (automatic && prop.key.name === 'key') {
+            if (spread) {
+              throw new Error(
+                'Expected `key` to come before any spread expressions'
+              )
+            }
 
-      if (objects.length > 1) {
-        // Don’t mutate the first object, shallow clone instead.
-        if (objects[0].type !== 'ObjectExpression') {
-          objects.unshift({type: 'ObjectExpression', properties: []})
+            key = prop.value
+          } else {
+            fields.push(prop)
+          }
         }
-
-        props = {
-          type: 'CallExpression',
-          callee: toMemberExpression('Object.assign'),
-          arguments: objects
-        }
-      } else if (objects.length) {
-        props = objects[0]
       }
     }
     // …and fragments.
-    else {
-      name = toMemberExpression(pragmaFrag || 'React.Fragment')
+    else if (automatic) {
+      imports.fragment = true
+      name = {type: 'Identifier', name: '_Fragment'}
+    } else {
+      name = toMemberExpression(
+        annotations.jsxFrag || settings.pragmaFrag || 'React.Fragment'
+      )
     }
 
-    // There are props or children.
-    if (props || parameters.length) {
-      parameters.unshift(props || {type: 'Literal', value: null})
+    if (automatic && children.length) {
+      fields.push({
+        type: 'Property',
+        key: {type: 'Identifier', name: 'children'},
+        value:
+          children.length > 1
+            ? {type: 'ArrayExpression', elements: children}
+            : children[0],
+        kind: 'init'
+      })
+    } else {
+      parameters = children
+    }
+
+    if (fields.length) {
+      objects.push({type: 'ObjectExpression', properties: fields})
+    }
+
+    if (objects.length > 1) {
+      // Don’t mutate the first object, shallow clone instead.
+      if (objects[0].type !== 'ObjectExpression') {
+        objects.unshift({type: 'ObjectExpression', properties: []})
+      }
+
+      props = {
+        type: 'CallExpression',
+        callee: toMemberExpression('Object.assign'),
+        arguments: objects
+      }
+    } else if (objects.length) {
+      props = objects[0]
+    }
+
+    if (automatic) {
+      if (children.length > 1) {
+        imports.jsxs = true
+        callee = {type: 'Identifier', name: '_jsxs'}
+      } else {
+        imports.jsx = true
+        callee = {type: 'Identifier', name: '_jsx'}
+      }
+
+      parameters.push(props || {type: 'ObjectExpression', properties: []})
+
+      if (key) {
+        parameters.push(key)
+      }
+    }
+    // Classic.
+    else {
+      // There are props or children.
+      if (props || parameters.length) {
+        parameters.unshift(props || {type: 'Literal', value: null})
+      }
+
+      callee = toMemberExpression(
+        annotations.jsx || settings.pragma || 'React.createElement'
+      )
     }
 
     parameters.unshift(name)
@@ -153,7 +283,7 @@ function buildJsx(tree, options) {
     this.replace(
       create(node, {
         type: 'CallExpression',
-        callee: toMemberExpression(pragma || 'React.createElement'),
+        callee: callee,
         arguments: parameters
       })
     )
