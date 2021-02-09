@@ -318,21 +318,32 @@ function toProperty(node) {
 }
 
 function toIdentifier(node) {
-  return create(
-    node,
-    node.type === 'JSXMemberExpression'
-      ? {
-          type: 'MemberExpression',
-          object: toIdentifier(node.object),
-          property: toIdentifier(node.property)
-        }
-      : node.type === 'JSXNamespacedName'
-      ? {type: 'Literal', value: node.namespace.name + ':' + node.name.name}
-      : // Must be `JSXIdentifier`.
-      isIdentifierName(node.name)
+  var replace
+
+  if (node.type === 'JSXMemberExpression') {
+    replace = {
+      type: 'MemberExpression',
+      object: toIdentifier(node.object),
+      // `property` is always a `JSXIdentifier`, but it could be something that
+      // isn’t an ES identifier name.
+      property: toIdentifier(node.property)
+    }
+
+    if (replace.property.type === 'Literal') replace.computed = true
+  } else if (node.type === 'JSXNamespacedName') {
+    replace = {
+      type: 'Literal',
+      value: node.namespace.name + ':' + node.name.name
+    }
+  }
+  // Must be `JSXIdentifier`.
+  else {
+    replace = isIdentifierName(node.name)
       ? {type: 'Identifier', name: node.name}
       : {type: 'Literal', value: node.name}
-  )
+  }
+
+  return create(node, replace)
 }
 
 function toMemberExpression(id) {
@@ -342,10 +353,15 @@ function toMemberExpression(id) {
   var prop
 
   while (++index < identifiers.length) {
-    prop = {type: 'Identifier', name: identifiers[index]}
+    prop = isIdentifierName(identifiers[index])
+      ? {type: 'Identifier', name: identifiers[index]}
+      : {type: 'Literal', value: identifiers[index]}
     result = index
       ? {type: 'MemberExpression', object: result, property: prop}
       : prop
+    if (index && prop.type === 'Literal') {
+      result.computed = true
+    }
   }
 
   return result

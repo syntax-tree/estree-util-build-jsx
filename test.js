@@ -62,6 +62,27 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
+    build(parse('<x />'), {pragma: 'a.b-c'}).body[0].expression,
+    {
+      type: 'CallExpression',
+      callee: {
+        type: 'MemberExpression',
+        object: {type: 'Identifier', name: 'a'},
+        property: {type: 'Literal', value: 'b-c'},
+        computed: true
+      },
+      arguments: [{type: 'Literal', value: 'x'}]
+    },
+    'should support `pragma` w/ non-identifiers (1)'
+  )
+
+  t.equal(
+    astring.generate(build(parse('<x />'), {pragma: 'a.b-c'})),
+    'a["b-c"]("x");\n',
+    'should support `pragma` w/ non-identifiers (2)'
+  )
+
+  t.deepEqual(
     build(parse('/* @jsx a @jsxFrag b */\n<><x /></>')).body[0].expression,
     {
       type: 'CallExpression',
@@ -179,6 +200,51 @@ test('estree-util-build-jsx', function (t) {
       ]
     },
     'should support dots in a tag name for member expressions'
+  )
+
+  t.deepEqual(
+    build(parse('<a.b-c />'), {pragma: 'h'}).body[0].expression,
+    {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {
+          type: 'MemberExpression',
+          object: {type: 'Identifier', name: 'a'},
+          property: {type: 'Literal', value: 'b-c'},
+          computed: true
+        }
+      ]
+    },
+    'should support dots *and* dashes in tag names (1)'
+  )
+
+  t.equal(
+    astring.generate(build(parse('<a.b-c />'), {pragma: 'h'})),
+    'h(a["b-c"]);\n',
+    'should support dots *and* dashes in tag names (2)'
+  )
+
+  t.deepEqual(
+    build(parse('<a-b.c />'), {pragma: 'h'}).body[0].expression,
+    {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {
+          type: 'MemberExpression',
+          object: {type: 'Literal', value: 'a-b'},
+          property: {type: 'Identifier', name: 'c'}
+        }
+      ]
+    },
+    'should support dots *and* dashes in tag names (3)'
+  )
+
+  t.equal(
+    astring.generate(build(parse('<a-b.c />'), {pragma: 'h'})),
+    'h(("a-b").c);\n',
+    'should support dots *and* dashes in tag names (4)'
   )
 
   t.deepEqual(
