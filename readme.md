@@ -16,6 +16,9 @@ So let’s make that two implementations.
 
 ## Install
 
+This package is ESM only: Node 12+ is needed to use it and it must be `import`ed
+instead of `require`d.
+
 [npm][]:
 
 ```sh
@@ -27,7 +30,7 @@ npm install estree-util-build-jsx
 Say we have the following file, `example.jsx`:
 
 ```js
-var x = require('xastscript')
+import x from 'xastscript'
 
 console.log(
   <album id={123}>
@@ -49,17 +52,20 @@ console.log(
 And our script, `example.js`, looks as follows:
 
 ```js
-var fs = require('fs')
-var acorn = require('acorn')
-var jsx = require('acorn-jsx')
-var astring = require('astring')
-var build = require('estree-util-build-jsx')
+import fs from 'fs'
+import {Parser} from 'acorn'
+import jsx from 'acorn-jsx'
+import astring from 'astring'
+import {buildJsx} from 'estree-util-build-jsx'
 
 var doc = fs.readFileSync('example.jsx')
 
-var tree = acorn.Parser.extend(jsx()).parse(doc)
+var tree = Parser.extend(jsx()).parse(doc, {
+  sourceType: 'module',
+  ecmaVersion: 2020
+})
 
-build(tree, {pragma: 'x', pragmaFrag: 'null'})
+buildJsx(tree, {pragma: 'x', pragmaFrag: 'null'})
 
 console.log(astring.generate(tree))
 ```
@@ -67,7 +73,7 @@ console.log(astring.generate(tree))
 Now, running `node example` yields:
 
 ```js
-var x = require('xastscript');
+import x from 'xastscript';
 console.log(x("album", {
   id: 123
 }, x("name", null, "Born in the U.S.A."), x("artist", null, "Bruce Springsteen"), x("releasedate", {
@@ -81,6 +87,9 @@ console.log(x(null, null, 1 + 1, x("self-closing"), x("x", Object.assign({
 ```
 
 ## API
+
+This package exports the following identifiers: `buildJsx`.
+There is no default export.
 
 ### `buildJsx(tree, options?)`
 
@@ -125,15 +134,17 @@ This is done automatically by [`espree`][espree].
 For [`acorn`][acorn], it can be done like so:
 
 ```js
-var acorn = require('acorn')
-var jsx = require('acorn-jsx')
+import {Parser} from 'acorn'
+import jsx from 'acorn-jsx'
+
+var doc = ''
 
 var comments = []
-var tree = acorn.Parser.extend(jsx()).parse(doc, {onComment: comments})
+var tree = Parser.extend(jsx()).parse(doc, {onComment: comments})
 tree.comments = comments
 ```
 
-In almost all cases, this utility is the same as the babel plugin, except that
+In almost all cases, this utility is the same as the Babel plugin, except that
 they work on slightly different syntax trees.
 
 Some differences:

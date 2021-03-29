@@ -1,19 +1,15 @@
-'use strict'
-
-module.exports = buildJsx
-
-var walk = require('estree-walker').walk
-var isIdentifierName = require('estree-util-is-identifier-name').name
+import {walk} from 'estree-walker'
+import {name as isIdentifierName} from 'estree-util-is-identifier-name'
 
 var regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
 
-function buildJsx(tree, options) {
+export function buildJsx(tree, options) {
   var settings = options || {}
   var automatic = settings.runtime === 'automatic'
   var annotations = {}
   var imports = {}
 
-  walk(tree, {enter: enter, leave: leave})
+  walk(tree, {enter, leave})
 
   return tree
 
@@ -109,10 +105,10 @@ function buildJsx(tree, options) {
         })
       }
 
-      if (specifiers.length) {
+      if (specifiers.length > 0) {
         node.body.unshift({
           type: 'ImportDeclaration',
-          specifiers: specifiers,
+          specifiers,
           source: {
             type: 'Literal',
             value:
@@ -184,7 +180,7 @@ function buildJsx(tree, options) {
       // in them and what’s spread in.
       while (++index < attributes.length) {
         if (attributes[index].type === 'JSXSpreadAttribute') {
-          if (fields.length) {
+          if (fields.length > 0) {
             objects.push({type: 'ObjectExpression', properties: fields})
             fields = []
           }
@@ -218,7 +214,7 @@ function buildJsx(tree, options) {
       )
     }
 
-    if (automatic && children.length) {
+    if (automatic && children.length > 0) {
       fields.push({
         type: 'Property',
         key: {type: 'Identifier', name: 'children'},
@@ -232,7 +228,7 @@ function buildJsx(tree, options) {
       parameters = children
     }
 
-    if (fields.length) {
+    if (fields.length > 0) {
       objects.push({type: 'ObjectExpression', properties: fields})
     }
 
@@ -247,7 +243,7 @@ function buildJsx(tree, options) {
         callee: toMemberExpression('Object.assign'),
         arguments: objects
       }
-    } else if (objects.length) {
+    } else if (objects.length > 0) {
       props = objects[0]
     }
 
@@ -269,7 +265,7 @@ function buildJsx(tree, options) {
     // Classic.
     else {
       // There are props or children.
-      if (props || parameters.length) {
+      if (props || parameters.length > 0) {
         parameters.unshift(props || {type: 'Literal', value: null})
       }
 
@@ -281,11 +277,7 @@ function buildJsx(tree, options) {
     parameters.unshift(name)
 
     this.replace(
-      create(node, {
-        type: 'CallExpression',
-        callee: callee,
-        arguments: parameters
-      })
+      create(node, {type: 'CallExpression', callee, arguments: parameters})
     )
   }
 }
@@ -312,7 +304,7 @@ function toProperty(node) {
   return create(node, {
     type: 'Property',
     key: toIdentifier(node.name),
-    value: value,
+    value,
     kind: 'init'
   })
 }

@@ -1,19 +1,17 @@
-'use strict'
+import test from 'tape'
+import {Parser} from 'acorn'
+import jsx from 'acorn-jsx'
+import {walk} from 'estree-walker'
+import astring from 'astring'
+import recast from 'recast'
+import escodegen from 'escodegen'
+import {buildJsx} from './index.js'
 
-var test = require('tape')
-var acorn = require('acorn')
-var jsx = require('acorn-jsx')
-var walker = require('estree-walker')
-var astring = require('astring')
-var recast = require('recast')
-var escodegen = require('escodegen')
-var build = require('.')
-
-var parser = acorn.Parser.extend(jsx())
+var parser = Parser.extend(jsx())
 
 test('estree-util-build-jsx', function (t) {
   t.deepEqual(
-    build(parse('<><x /></>')).body[0].expression,
+    buildJsx(parse('<><x /></>')).body[0].expression,
     {
       type: 'CallExpression',
       callee: {
@@ -43,7 +41,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<><x /></>'), {pragma: 'a', pragmaFrag: 'b'}).body[0]
+    buildJsx(parse('<><x /></>'), {pragma: 'a', pragmaFrag: 'b'}).body[0]
       .expression,
     {
       type: 'CallExpression',
@@ -62,7 +60,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<x />'), {pragma: 'a.b-c'}).body[0].expression,
+    buildJsx(parse('<x />'), {pragma: 'a.b-c'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {
@@ -77,13 +75,13 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.equal(
-    astring.generate(build(parse('<x />'), {pragma: 'a.b-c'})),
+    astring.generate(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
     'a["b-c"]("x");\n',
     'should support `pragma` w/ non-identifiers (2)'
   )
 
   t.deepEqual(
-    build(parse('/* @jsx a @jsxFrag b */\n<><x /></>')).body[0].expression,
+    buildJsx(parse('/* @jsx a @jsxFrag b */\n<><x /></>')).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'a'},
@@ -102,7 +100,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.throws(
     function () {
-      build(parse('/* @jsx a @jsxRuntime automatic */'))
+      buildJsx(parse('/* @jsx a @jsxRuntime automatic */'))
     },
     /Unexpected `@jsx` pragma w\/ automatic runtime/,
     'should throw when `@jsx` is set in the automatic runtime'
@@ -110,7 +108,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.throws(
     function () {
-      build(parse('/* @jsxFrag a @jsxRuntime automatic */'))
+      buildJsx(parse('/* @jsxFrag a @jsxRuntime automatic */'))
     },
     /Unexpected `@jsxFrag` pragma w\/ automatic runtime/,
     'should throw when `@jsxFrag` is set in the automatic runtime'
@@ -118,7 +116,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.throws(
     function () {
-      build(parse('/* @jsxImportSource a @jsxRuntime classic */'))
+      buildJsx(parse('/* @jsxImportSource a @jsxRuntime classic */'))
     },
     /Unexpected `@jsxImportSource` w\/ classic runtime/,
     'should throw when `@jsxImportSource` is set in the classic runtime'
@@ -126,14 +124,14 @@ test('estree-util-build-jsx', function (t) {
 
   t.throws(
     function () {
-      build(parse('/* @jsxRuntime a */'))
+      buildJsx(parse('/* @jsxRuntime a */'))
     },
     /Unexpected `jsxRuntime` `a`, expected `automatic` or `classic`/,
     'should throw on a non-automatic nor classic `@jsxRuntime`'
   )
 
   t.deepEqual(
-    build(parse('// a\n<><x /></>')).body[0].expression,
+    buildJsx(parse('// a\n<><x /></>')).body[0].expression,
     {
       type: 'CallExpression',
       callee: {
@@ -163,7 +161,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -173,7 +171,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a>b</a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a>b</a>'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -187,7 +185,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a.b />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a.b />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -203,7 +201,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a.b-c />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a.b-c />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -220,13 +218,13 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.equal(
-    astring.generate(build(parse('<a.b-c />'), {pragma: 'h'})),
+    astring.generate(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
     'h(a["b-c"]);\n',
     'should support dots *and* dashes in tag names (2)'
   )
 
   t.deepEqual(
-    build(parse('<a-b.c />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a-b.c />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -242,13 +240,13 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.equal(
-    astring.generate(build(parse('<a-b.c />'), {pragma: 'h'})),
+    astring.generate(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
     'h(("a-b").c);\n',
     'should support dots *and* dashes in tag names (4)'
   )
 
   t.deepEqual(
-    build(parse('<a.b.c.d />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a.b.c.d />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -272,7 +270,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a:b />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a:b />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -282,7 +280,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a-b />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a-b />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -292,7 +290,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<A />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<A />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -302,7 +300,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -325,7 +323,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b:c />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b:c />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -348,7 +346,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b-c />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b-c />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -371,7 +369,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b="c" />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b="c" />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -394,7 +392,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b={c} />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b={c} />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -417,7 +415,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b={1} />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b={1} />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -440,7 +438,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b=<>c</> />'), {pragma: 'h', pragmaFrag: 'f'}).body[0]
+    buildJsx(parse('<a b=<>c</> />'), {pragma: 'h', pragmaFrag: 'f'}).body[0]
       .expression,
     {
       type: 'CallExpression',
@@ -472,7 +470,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b=<c /> />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b=<c /> />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -499,7 +497,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a {...b} />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a {...b} />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -512,7 +510,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a {...b} c />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a {...b} c />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -547,7 +545,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a b {...c} />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a b {...c} />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -581,7 +579,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a {...b} {...c} />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a {...b} {...c} />'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -606,7 +604,8 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a {...{b:1,...c,d:2}} />'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a {...{b:1,...c,d:2}} />'), {pragma: 'h'}).body[0]
+      .expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -642,7 +641,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a>{1}</a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a>{1}</a>'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -656,7 +655,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a>{}</a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a>{}</a>'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -666,7 +665,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a>  b</a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a>  b</a>'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -680,7 +679,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a>b  </a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a>b  </a>'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -694,7 +693,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a>  b  </a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a>  b  </a>'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -708,7 +707,8 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a> b \r c \n d \n </a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a> b \r c \n d \n </a>'), {pragma: 'h'}).body[0]
+      .expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -722,7 +722,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a> b \r \n c \n\n d \n </a>'), {pragma: 'h'}).body[0]
+    buildJsx(parse('<a> b \r \n c \n\n d \n </a>'), {pragma: 'h'}).body[0]
       .expression,
     {
       type: 'CallExpression',
@@ -737,7 +737,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<a> \t\n </a>'), {pragma: 'h'}).body[0].expression,
+    buildJsx(parse('<a> \t\n </a>'), {pragma: 'h'}).body[0].expression,
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
@@ -748,7 +748,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.equal(
     astring.generate(
-      build(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
+      buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
         pragma: 'h',
         pragmaFrag: 'f'
       })
@@ -759,7 +759,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.equal(
     recast.print(
-      build(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
+      buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
         pragma: 'h',
         pragmaFrag: 'f'
       })
@@ -770,7 +770,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.equal(
     escodegen.generate(
-      build(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
+      buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
         pragma: 'h',
         pragmaFrag: 'f'
       })
@@ -780,7 +780,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>', false)),
+    buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>', false)),
     {
       type: 'Program',
       start: 0,
@@ -974,7 +974,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    build(parse('<><x /></>', true, false)),
+    buildJsx(parse('<><x /></>', true, false)),
     {
       type: 'Program',
       body: [
@@ -1013,7 +1013,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(build(parse('<>a</>'), {runtime: 'automatic'})),
+    astring.generate(buildJsx(parse('<>a</>'), {runtime: 'automatic'})),
     [
       'import {Fragment as _Fragment, jsx as _jsx} from "react/jsx-runtime";',
       '_jsx(_Fragment, {',
@@ -1026,7 +1026,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.deepEqual(
     astring.generate(
-      build(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))
+      buildJsx(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))
     ),
     [
       'import {jsxs as _jsxs} from "react/jsx-runtime";',
@@ -1040,7 +1040,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.deepEqual(
     astring.generate(
-      build(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})
+      buildJsx(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})
     ),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
@@ -1056,7 +1056,9 @@ test('estree-util-build-jsx', function (t) {
 
   t.deepEqual(
     astring.generate(
-      build(parse('<a {...{b: 1, c: 2}} d="e">f</a>'), {runtime: 'automatic'})
+      buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>'), {
+        runtime: 'automatic'
+      })
     ),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
@@ -1073,7 +1075,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(build(parse('<a>b</a>'), {runtime: 'automatic'})),
+    astring.generate(buildJsx(parse('<a>b</a>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {',
@@ -1085,7 +1087,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(build(parse('<a/>'), {runtime: 'automatic'})),
+    astring.generate(buildJsx(parse('<a/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {});',
@@ -1095,7 +1097,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(build(parse('<a key/>'), {runtime: 'automatic'})),
+    astring.generate(buildJsx(parse('<a key/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {}, true);',
@@ -1106,7 +1108,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.throws(
     function () {
-      build(parse('<a {...b} key/>'), {runtime: 'automatic'})
+      buildJsx(parse('<a {...b} key/>'), {runtime: 'automatic'})
     },
     /Expected `key` to come before any spread expressions/,
     'should throw on spread after `key`'
@@ -1114,7 +1116,7 @@ test('estree-util-build-jsx', function (t) {
 
   t.deepEqual(
     astring.generate(
-      build(parse('/*@jsxRuntime classic*/ <a/>'), {runtime: 'automatic'})
+      buildJsx(parse('/*@jsxRuntime classic*/ <a/>'), {runtime: 'automatic'})
     ),
     'React.createElement("a");\n',
     'should prefer a `jsxRuntime` comment over a `runtime` option'
@@ -1133,7 +1135,7 @@ function parse(doc, clean, addComments) {
 
   if (addComments !== false) tree.comments = comments
 
-  if (clean !== false) walker.walk(tree, {leave: leave})
+  if (clean !== false) walk(tree, {leave})
 
   return JSON.parse(JSON.stringify(tree))
 

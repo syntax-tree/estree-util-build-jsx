@@ -31,17 +31,21 @@
   "contributors": [
     "Titus Wormer <tituswormer@gmail.com> (https://wooorm.com)"
   ],
+  "sideEffects": false,
+  "type": "module",
+  "main": "index.js",
   "files": [
     "index.js"
   ],
   "dependencies": {
-    "estree-util-is-identifier-name": "^1.0.0",
-    "estree-walker": "^2.0.0"
+    "estree-util-is-identifier-name": "^2.0.0",
+    "estree-walker": "^3.0.0"
   },
   "devDependencies": {
     "acorn": "^8.0.0",
     "acorn-jsx": "^5.0.0",
     "astring": "^1.0.0",
+    "c8": "^7.6.0",
     "escodegen": "^2.0.0",
     "nyc": "^15.0.0",
     "prettier": "^2.0.0",
@@ -53,8 +57,8 @@
   },
   "scripts": {
     "format": "remark . -qfo && prettier . -w --loglevel warn && xo --fix",
-    "test-api": "node test",
-    "test-coverage": "nyc --reporter lcov tape test.js",
+    "test-api": "node test.js",
+    "test-coverage": "c8 --check-coverage --branches 100 --functions 100 --lines 100 --statements 100 --reporter lcov node test.js",
     "test": "npm run format && npm run test-coverage"
   },
   "prettier": {
@@ -67,19 +71,10 @@
   },
   "xo": {
     "prettier": true,
-    "esnext": false,
     "rules": {
-      "guard-for-in": "off",
-      "max-depth": "off",
-      "unicorn/explicit-length-check": "off",
-      "unicorn/prefer-number-properties": "off"
+      "no-var": "off",
+      "prefer-arrow-callback": "off"
     }
-  },
-  "nyc": {
-    "check-coverage": true,
-    "lines": 100,
-    "functions": 100,
-    "branches": 100
   },
   "remarkConfig": {
     "plugins": [
