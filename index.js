@@ -3,21 +3,78 @@ import {name as isIdentifierName} from 'estree-util-is-identifier-name'
 
 var regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
 
-export function buildJsx(tree, options) {
-  var settings = options || {}
-  var automatic = settings.runtime === 'automatic'
+/**
+ * @typedef {import('estree-jsx').Node} Node
+ * @typedef {import('estree-jsx').Comment} Comment
+ * @typedef {import('estree-jsx').Expression} Expression
+ * @typedef {import('estree-jsx').Pattern} Pattern
+ * @typedef {import('estree-jsx').Property} Property
+ * @typedef {import('estree-jsx').ImportSpecifier} ImportSpecifier
+ * @typedef {import('estree-jsx').SpreadElement} SpreadElement
+ * @typedef {import('estree-jsx').MemberExpression} MemberExpression
+ * @typedef {import('estree-jsx').Literal} Literal
+ * @typedef {import('estree-jsx').Identifier} Identifier
+ * @typedef {import('estree-jsx').JSXElement} JSXElement
+ * @typedef {import('estree-jsx').JSXFragment} JSXFragment
+ * @typedef {import('estree-jsx').JSXText} JSXText
+ * @typedef {import('estree-jsx').JSXExpressionContainer} JSXExpressionContainer
+ * @typedef {import('estree-jsx').JSXEmptyExpression} JSXEmptyExpression
+ * @typedef {import('estree-jsx').JSXSpreadChild} JSXSpreadChild
+ * @typedef {import('estree-jsx').JSXAttribute} JSXAttribute
+ * @typedef {import('estree-jsx').JSXSpreadAttribute} JSXSpreadAttribute
+ * @typedef {import('estree-jsx').JSXMemberExpression} JSXMemberExpression
+ * @typedef {import('estree-jsx').JSXNamespacedName} JSXNamespacedName
+ * @typedef {import('estree-jsx').JSXIdentifier} JSXIdentifier
+ *
+ * @typedef {import('estree-walker').SyncHandler} SyncHandler
+ */
+
+/**
+ * @typedef {Object} BuildJsxOptions
+ * @property {'automatic'|'classic'} [runtime='classic']
+ * @property {string} [importSource='react']
+ * @property {string} [pragma='React.createElement']
+ * @property {string} [pragmaFrag='React.Fragment']
+ */
+
+/**
+ * @typedef {Object} Annotations
+ * @property {'automatic'|'classic'} [jsxRuntime]
+ * @property {string} [jsx]
+ * @property {string} [jsxFrag]
+ * @property {string} [jsxImportSource]
+ */
+
+/**
+ * @template {Node} T
+ * @param {T} tree
+ * @param {BuildJsxOptions} [options={}]
+ * @returns {T}
+ */
+export function buildJsx(tree, options = {}) {
+  var automatic = options.runtime === 'automatic'
+  /** @type {Annotations} */
   var annotations = {}
+  /** @type {{fragment?: boolean, jsx?: boolean, jsxs?: boolean}} */
   var imports = {}
 
   walk(tree, {enter, leave})
 
   return tree
 
-  // When entering the program, check all comments, and prefer comments over
-  // config.
+  /**
+   * When entering the program, check all comments, and prefer comments over
+   * config.
+   *
+   * @type {SyncHandler}
+   * @param {Node} node
+   */
   function enter(node) {
+    /** @type {Comment[]} */
     var comments
+    /** @type {number} */
     var index
+    /** @type {RegExpMatchArray} */
     var match
 
     if (node.type === 'Program') {
@@ -60,23 +117,45 @@ export function buildJsx(tree, options) {
     }
   }
 
-  // Transform JSX.
+  /**
+   * Transform JSX.
+   *
+   * @type {SyncHandler}
+   * @param {Node} node
+   */
   // eslint-disable-next-line complexity
   function leave(node) {
-    var parameters
-    var children
-    var fields
-    var objects
-    var index
+    /** @type {Array.<Expression|SpreadElement>} */
+    var parameters = []
+    /** @type {Array.<Expression>} */
+    var children = []
+    /** @type {Array.<Expression>} */
+    var objects = []
+    /** @type {Array.<Property>} */
+    var fields = []
+    var index = -1
+    /** @type {JSXExpressionContainer|JSXElement|JSXFragment|JSXText|JSXSpreadChild} */
     var child
+    /** @type {MemberExpression|Literal|Identifier} */
     var name
+    /** @type {Expression} */
     var props
+    /** @type {Array<JSXAttribute | JSXSpreadAttribute>} */
     var attributes
+    /** @type {JSXAttribute | JSXSpreadAttribute} */
+    var attribute
+    /** @type {boolean} */
     var spread
+    /** @type {Expression} */
     var key
+    /** @type {MemberExpression|Literal|Identifier} */
     var callee
+    /** @type {Array<ImportSpecifier>} */
     var specifiers
+    /** @type {Property} */
     var prop
+    /** @type {string} */
+    var value
 
     if (node.type === 'Program') {
       specifiers = []
@@ -112,9 +191,8 @@ export function buildJsx(tree, options) {
           source: {
             type: 'Literal',
             value:
-              (annotations.jsxImportSource ||
-                settings.importSource ||
-                'react') + '/jsx-runtime'
+              (annotations.jsxImportSource || options.importSource || 'react') +
+              '/jsx-runtime'
           }
         })
       }
@@ -124,47 +202,41 @@ export function buildJsx(tree, options) {
       return
     }
 
-    parameters = []
-    children = []
-    objects = []
-    fields = []
-    index = -1
-
     // Figure out `children`.
     while (++index < node.children.length) {
       child = node.children[index]
 
       if (child.type === 'JSXExpressionContainer') {
-        child = child.expression
-
         // Ignore empty expressions.
-        if (child.type === 'JSXEmptyExpression') continue
+        if (child.expression.type !== 'JSXEmptyExpression') {
+          children.push(child.expression)
+        }
       } else if (child.type === 'JSXText') {
-        child = create(child, {
-          type: 'Literal',
-          value: child.value
-            // Replace tabs w/ spaces.
-            .replace(/\t/g, ' ')
-            // Use line feeds, drop spaces around them.
-            .replace(/ *(\r?\n|\r) */g, '\n')
-            // Collapse multiple line feeds.
-            .replace(/\n+/g, '\n')
-            // Drop final line feeds.
-            .replace(/\n+$/, '')
-            // Replace line feeds with spaces.
-            .replace(/\n/g, ' ')
-        })
+        value = child.value
+          // Replace tabs w/ spaces.
+          .replace(/\t/g, ' ')
+          // Use line feeds, drop spaces around them.
+          .replace(/ *(\r?\n|\r) */g, '\n')
+          // Collapse multiple line feeds.
+          .replace(/\n+/g, '\n')
+          // Drop final line feeds.
+          .replace(/\n+$/, '')
+          // Replace line feeds with spaces.
+          .replace(/\n/g, ' ')
 
         // Ignore collapsible text.
-        if (!child.value) continue
+        if (value) {
+          children.push(create(child, {type: 'Literal', value}))
+        }
+      } else {
+        // @ts-ignore JSX{Element,Fragment} have already been compiled, and
+        // `JSXSpreadChild` is not supported in Babel either, so ignore it.
+        children.push(child)
       }
-      // Otherwise, this is an already compiled call.
-
-      children.push(child)
     }
 
     // Do the stuff needed for elements.
-    if (node.openingElement) {
+    if (node.type === 'JSXElement') {
       name = toIdentifier(node.openingElement.name)
 
       // If the name could be an identifier, but start with a lowercase letter,
@@ -179,24 +251,32 @@ export function buildJsx(tree, options) {
       // Place props in the right order, because we might have duplicates
       // in them and what’s spread in.
       while (++index < attributes.length) {
-        if (attributes[index].type === 'JSXSpreadAttribute') {
+        attribute = attributes[index]
+
+        if (attribute.type === 'JSXSpreadAttribute') {
           if (fields.length > 0) {
             objects.push({type: 'ObjectExpression', properties: fields})
             fields = []
           }
 
-          objects.push(attributes[index].argument)
+          objects.push(attribute.argument)
           spread = true
         } else {
-          prop = toProperty(attributes[index])
+          prop = toProperty(attribute)
 
-          if (automatic && prop.key.name === 'key') {
+          if (
+            automatic &&
+            prop.key.type === 'Identifier' &&
+            prop.key.name === 'key'
+          ) {
             if (spread) {
               throw new Error(
                 'Expected `key` to come before any spread expressions'
               )
             }
 
+            // @ts-ignore I can’t see object patterns being used as attribute
+            // values? 🤷‍♂️
             key = prop.value
           } else {
             fields.push(prop)
@@ -210,7 +290,7 @@ export function buildJsx(tree, options) {
       name = {type: 'Identifier', name: '_Fragment'}
     } else {
       name = toMemberExpression(
-        annotations.jsxFrag || settings.pragmaFrag || 'React.Fragment'
+        annotations.jsxFrag || options.pragmaFrag || 'React.Fragment'
       )
     }
 
@@ -222,7 +302,10 @@ export function buildJsx(tree, options) {
           children.length > 1
             ? {type: 'ArrayExpression', elements: children}
             : children[0],
-        kind: 'init'
+        kind: 'init',
+        method: false,
+        shorthand: false,
+        computed: false
       })
     } else {
       parameters = children
@@ -241,7 +324,8 @@ export function buildJsx(tree, options) {
       props = {
         type: 'CallExpression',
         callee: toMemberExpression('Object.assign'),
-        arguments: objects
+        arguments: objects,
+        optional: false
       }
     } else if (objects.length > 0) {
       props = objects[0]
@@ -270,29 +354,43 @@ export function buildJsx(tree, options) {
       }
 
       callee = toMemberExpression(
-        annotations.jsx || settings.pragma || 'React.createElement'
+        annotations.jsx || options.pragma || 'React.createElement'
       )
     }
 
     parameters.unshift(name)
 
     this.replace(
-      create(node, {type: 'CallExpression', callee, arguments: parameters})
+      create(node, {
+        type: 'CallExpression',
+        callee,
+        arguments: parameters,
+        optional: false
+      })
     )
   }
 }
 
+/**
+ * @param {JSXAttribute} node
+ * @returns {Property}
+ */
 function toProperty(node) {
+  /** @type {Expression} */
   var value
 
   if (node.value) {
     if (node.value.type === 'JSXExpressionContainer') {
+      // @ts-ignore `JSXEmptyExpression` is not allowed in props.
       value = node.value.expression
     }
-    // Could be an element, fragment, or string.
+    // Literal or call expression.
     else {
+      // @ts-ignore: JSX{Element,Fragment} are already compiled to
+      // `CallExpression`.
       value = node.value
-      // Remove `raw` so we don’t get character references in strings.
+      // @ts-ignore - Remove `raw` so we don’t get character references in
+      // strings.
       delete value.raw
     }
   }
@@ -305,23 +403,34 @@ function toProperty(node) {
     type: 'Property',
     key: toIdentifier(node.name),
     value,
-    kind: 'init'
+    kind: 'init',
+    method: false,
+    shorthand: false,
+    computed: false
   })
 }
 
+/**
+ * @param {JSXMemberExpression|JSXNamespacedName|JSXIdentifier} node
+ * @returns {MemberExpression|Identifier|Literal}
+ */
 function toIdentifier(node) {
+  /** @type {MemberExpression|Identifier|Literal} */
   var replace
+  /** @type {MemberExpression|Identifier|Literal} */
+  var id
 
   if (node.type === 'JSXMemberExpression') {
+    // `property` is always a `JSXIdentifier`, but it could be something that
+    // isn’t an ES identifier name.
+    id = toIdentifier(node.property)
     replace = {
       type: 'MemberExpression',
       object: toIdentifier(node.object),
-      // `property` is always a `JSXIdentifier`, but it could be something that
-      // isn’t an ES identifier name.
-      property: toIdentifier(node.property)
+      property: id,
+      computed: id.type === 'Literal',
+      optional: false
     }
-
-    if (replace.property.type === 'Literal') replace.computed = true
   } else if (node.type === 'JSXNamespacedName') {
     replace = {
       type: 'Literal',
@@ -338,10 +447,16 @@ function toIdentifier(node) {
   return create(node, replace)
 }
 
+/**
+ * @param {string} id
+ * @returns {Identifier|Literal|MemberExpression}
+ */
 function toMemberExpression(id) {
   var identifiers = id.split('.')
   var index = -1
+  /** @type {Identifier|Literal|MemberExpression} */
   var result
+  /** @type {Identifier|Literal} */
   var prop
 
   while (++index < identifiers.length) {
@@ -349,25 +464,35 @@ function toMemberExpression(id) {
       ? {type: 'Identifier', name: identifiers[index]}
       : {type: 'Literal', value: identifiers[index]}
     result = index
-      ? {type: 'MemberExpression', object: result, property: prop}
+      ? {
+          type: 'MemberExpression',
+          object: result,
+          property: prop,
+          computed: index && prop.type === 'Literal',
+          optional: false
+        }
       : prop
-    if (index && prop.type === 'Literal') {
-      result.computed = true
-    }
   }
 
   return result
 }
 
-function create(template, node) {
+/**
+ * @template {Node} T
+ * @param {Node} from
+ * @param {T} node
+ * @returns {T}
+ */
+function create(from, node) {
   var fields = ['start', 'end', 'loc', 'range', 'comments']
   var index = -1
+  /** @type {string} */
   var field
 
   while (++index < fields.length) {
     field = fields[index]
-    if (field in template) {
-      node[field] = template[field]
+    if (field in from) {
+      node[field] = from[field]
     }
   }
 
