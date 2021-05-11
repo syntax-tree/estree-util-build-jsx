@@ -3,7 +3,7 @@ import {Parser} from 'acorn'
 // @ts-ignore
 import jsx from 'acorn-jsx'
 import {walk} from 'estree-walker'
-import astring from 'astring'
+import {generate} from 'astring'
 import recast from 'recast'
 import escodegen from 'escodegen'
 import {buildJsx} from './index.js'
@@ -87,7 +87,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.equal(
-    astring.generate(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
+    generate(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
     'a["b-c"]("x");\n',
     'should support `pragma` w/ non-identifiers (2)'
   )
@@ -247,7 +247,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.equal(
-    astring.generate(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
+    generate(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
     'h(a["b-c"]);\n',
     'should support dots *and* dashes in tag names (2)'
   )
@@ -272,7 +272,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.equal(
-    astring.generate(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
+    generate(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
     'h(("a-b").c);\n',
     'should support dots *and* dashes in tag names (4)'
   )
@@ -849,7 +849,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.equal(
-    astring.generate(
+    generate(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
         pragma: 'h',
         pragmaFrag: 'f'
@@ -1143,7 +1143,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(buildJsx(parse('<>a</>'), {runtime: 'automatic'})),
+    generate(buildJsx(parse('<>a</>'), {runtime: 'automatic'})),
     [
       'import {Fragment as _Fragment, jsx as _jsx} from "react/jsx-runtime";',
       '_jsx(_Fragment, {',
@@ -1155,9 +1155,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(
-      buildJsx(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))
-    ),
+    generate(buildJsx(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))),
     [
       'import {jsxs as _jsxs} from "react/jsx-runtime";',
       '_jsxs("a", {',
@@ -1169,9 +1167,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(
-      buildJsx(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})
-    ),
+    generate(buildJsx(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", Object.assign({',
@@ -1185,7 +1181,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(
+    generate(
       buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>'), {
         runtime: 'automatic'
       })
@@ -1205,7 +1201,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(buildJsx(parse('<a>b</a>'), {runtime: 'automatic'})),
+    generate(buildJsx(parse('<a>b</a>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {',
@@ -1217,7 +1213,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(buildJsx(parse('<a/>'), {runtime: 'automatic'})),
+    generate(buildJsx(parse('<a/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {});',
@@ -1227,7 +1223,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(buildJsx(parse('<a key/>'), {runtime: 'automatic'})),
+    generate(buildJsx(parse('<a key/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {}, true);',
@@ -1245,7 +1241,7 @@ test('estree-util-build-jsx', function (t) {
   )
 
   t.deepEqual(
-    astring.generate(
+    generate(
       buildJsx(parse('/*@jsxRuntime classic*/ <a/>'), {runtime: 'automatic'})
     ),
     'React.createElement("a");\n',

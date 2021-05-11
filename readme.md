@@ -58,7 +58,7 @@ And our script, `example.js`, looks as follows:
 import fs from 'fs'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
-import astring from 'astring'
+import {generate} from 'astring'
 import {buildJsx} from 'estree-util-build-jsx'
 
 var doc = fs.readFileSync('example.jsx')
@@ -70,7 +70,7 @@ var tree = Parser.extend(jsx()).parse(doc, {
 
 buildJsx(tree, {pragma: 'x', pragmaFrag: 'null'})
 
-console.log(astring.generate(tree))
+console.log(generate(tree))
 ```
 
 Now, running `node example` yields:
