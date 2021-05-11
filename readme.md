@@ -4,6 +4,9 @@
 [![Coverage][coverage-badge]][coverage]
 [![Downloads][downloads-badge]][downloads]
 [![Size][size-badge]][size]
+[![Sponsors][sponsors-badge]][collective]
+[![Backers][backers-badge]][collective]
+[![Chat][chat-badge]][chat]
 
 Transform JSX to function calls: `<x />` -> `h('x')`!
 
@@ -169,13 +172,13 @@ Some differences:
 
 <!-- Definitions -->
 
-[build-badge]: https://github.com/wooorm/estree-util-build-jsx/workflows/main/badge.svg
+[build-badge]: https://github.com/syntax-tree/estree-util-build-jsx/workflows/main/badge.svg
 
-[build]: https://github.com/wooorm/estree-util-build-jsx/actions
+[build]: https://github.com/syntax-tree/estree-util-build-jsx/actions
 
-[coverage-badge]: https://img.shields.io/codecov/c/github/wooorm/estree-util-build-jsx.svg
+[coverage-badge]: https://img.shields.io/codecov/c/github/syntax-tree/estree-util-build-jsx.svg
 
-[coverage]: https://codecov.io/github/wooorm/estree-util-build-jsx
+[coverage]: https://codecov.io/github/syntax-tree/estree-util-build-jsx
 
 [downloads-badge]: https://img.shields.io/npm/dm/estree-util-build-jsx.svg
 
@@ -184,6 +187,16 @@ Some differences:
 [size-badge]: https://img.shields.io/bundlephobia/minzip/estree-util-build-jsx.svg
 
 [size]: https://bundlephobia.com/result?p=estree-util-build-jsx
+
+[sponsors-badge]: https://opencollective.com/unified/sponsors/badge.svg
+
+[backers-badge]: https://opencollective.com/unified/backers/badge.svg
+
+[collective]: https://opencollective.com/unified
+
+[chat-badge]: https://img.shields.io/badge/chat-discussions-success.svg
+
+[chat]: https://github.com/syntax-tree/unist/discussions
 
 [npm]: https://docs.npmjs.com/cli/install
 

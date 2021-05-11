@@ -21,11 +21,11 @@
     "react",
     "preact"
   ],
-  "repository": "wooorm/estree-util-build-jsx",
-  "bugs": "https://github.com/wooorm/estree-util-build-jsx/issues",
+  "repository": "syntax-tree/estree-util-build-jsx",
+  "bugs": "https://github.com/syntax-tree/estree-util-build-jsx/issues",
   "funding": {
-    "type": "github",
-    "url": "https://github.com/sponsors/wooorm"
+    "type": "opencollective",
+    "url": "https://opencollective.com/unified"
   },
   "author": "Titus Wormer <tituswormer@gmail.com> (https://wooorm.com)",
   "contributors": [
