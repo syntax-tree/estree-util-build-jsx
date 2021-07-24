@@ -55,15 +55,15 @@ console.log(
 And our script, `example.js`, looks as follows:
 
 ```js
-import fs from 'fs'
+import fs from 'node:fs'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 import {generate} from 'astring'
 import {buildJsx} from 'estree-util-build-jsx'
 
-var doc = fs.readFileSync('example.jsx')
+const doc = fs.readFileSync('example.jsx')
 
-var tree = Parser.extend(jsx()).parse(doc, {
+const tree = Parser.extend(jsx()).parse(doc, {
   sourceType: 'module',
   ecmaVersion: 2020
 })

@@ -1,7 +1,7 @@
 import {walk} from 'estree-walker'
 import {name as isIdentifierName} from 'estree-util-is-identifier-name'
 
-var regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
+const regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
 
 /**
  * @typedef {import('estree-jsx').Node} Node
@@ -52,11 +52,11 @@ var regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
  * @returns {T}
  */
 export function buildJsx(tree, options = {}) {
-  var automatic = options.runtime === 'automatic'
+  let automatic = options.runtime === 'automatic'
   /** @type {Annotations} */
-  var annotations = {}
+  const annotations = {}
   /** @type {{fragment?: boolean, jsx?: boolean, jsxs?: boolean}} */
-  var imports = {}
+  const imports = {}
 
   walk(tree, {enter, leave})
 
@@ -70,19 +70,15 @@ export function buildJsx(tree, options = {}) {
    * @param {Node} node
    */
   function enter(node) {
-    /** @type {Comment[]} */
-    var comments
-    /** @type {number} */
-    var index
-    /** @type {RegExpMatchArray} */
-    var match
-
     if (node.type === 'Program') {
-      comments = node.comments || []
-      index = -1
+      const comments = node.comments || []
+      let index = -1
 
       while (++index < comments.length) {
         regex.lastIndex = 0
+
+        /** @type {RegExpMatchArray} */
+        let match
 
         while ((match = regex.exec(comments[index].value))) {
           annotations[match[1]] = match[2]
@@ -125,40 +121,9 @@ export function buildJsx(tree, options = {}) {
    */
   // eslint-disable-next-line complexity
   function leave(node) {
-    /** @type {Array.<Expression|SpreadElement>} */
-    var parameters = []
-    /** @type {Array.<Expression>} */
-    var children = []
-    /** @type {Array.<Expression>} */
-    var objects = []
-    /** @type {Array.<Property>} */
-    var fields = []
-    var index = -1
-    /** @type {JSXExpressionContainer|JSXElement|JSXFragment|JSXText|JSXSpreadChild} */
-    var child
-    /** @type {MemberExpression|Literal|Identifier} */
-    var name
-    /** @type {Expression} */
-    var props
-    /** @type {Array<JSXAttribute | JSXSpreadAttribute>} */
-    var attributes
-    /** @type {JSXAttribute | JSXSpreadAttribute} */
-    var attribute
-    /** @type {boolean} */
-    var spread
-    /** @type {Expression} */
-    var key
-    /** @type {MemberExpression|Literal|Identifier} */
-    var callee
-    /** @type {Array<ImportSpecifier>} */
-    var specifiers
-    /** @type {Property} */
-    var prop
-    /** @type {string} */
-    var value
-
     if (node.type === 'Program') {
-      specifiers = []
+      /** @type {Array<ImportSpecifier>} */
+      const specifiers = []
 
       if (imports.fragment) {
         specifiers.push({
@@ -202,9 +167,13 @@ export function buildJsx(tree, options = {}) {
       return
     }
 
+    /** @type {Array.<Expression>} */
+    const children = []
+    let index = -1
+
     // Figure out `children`.
     while (++index < node.children.length) {
-      child = node.children[index]
+      const child = node.children[index]
 
       if (child.type === 'JSXExpressionContainer') {
         // Ignore empty expressions.
@@ -212,7 +181,7 @@ export function buildJsx(tree, options = {}) {
           children.push(child.expression)
         }
       } else if (child.type === 'JSXText') {
-        value = child.value
+        const value = child.value
           // Replace tabs w/ spaces.
           .replace(/\t/g, ' ')
           // Use line feeds, drop spaces around them.
@@ -235,6 +204,17 @@ export function buildJsx(tree, options = {}) {
       }
     }
 
+    /** @type {MemberExpression|Literal|Identifier} */
+    let name
+    /** @type {Array.<Property>} */
+    let fields = []
+    /** @type {Array.<Expression>} */
+    const objects = []
+    /** @type {Array.<Expression|SpreadElement>} */
+    let parameters = []
+    /** @type {Expression} */
+    let key
+
     // Do the stuff needed for elements.
     if (node.type === 'JSXElement') {
       name = toIdentifier(node.openingElement.name)
@@ -245,13 +225,15 @@ export function buildJsx(tree, options = {}) {
         name = create(name, {type: 'Literal', value: name.name})
       }
 
-      attributes = node.openingElement.attributes
-      index = -1
+      /** @type {boolean} */
+      let spread
+      const attributes = node.openingElement.attributes
+      let index = -1
 
       // Place props in the right order, because we might have duplicates
       // in them and what’s spread in.
       while (++index < attributes.length) {
-        attribute = attributes[index]
+        const attribute = attributes[index]
 
         if (attribute.type === 'JSXSpreadAttribute') {
           if (fields.length > 0) {
@@ -262,7 +244,7 @@ export function buildJsx(tree, options = {}) {
           objects.push(attribute.argument)
           spread = true
         } else {
-          prop = toProperty(attribute)
+          const prop = toProperty(attribute)
 
           if (
             automatic &&
@@ -314,6 +296,11 @@ export function buildJsx(tree, options = {}) {
     if (fields.length > 0) {
       objects.push({type: 'ObjectExpression', properties: fields})
     }
+
+    /** @type {Expression} */
+    let props
+    /** @type {MemberExpression|Literal|Identifier} */
+    let callee
 
     if (objects.length > 1) {
       // Don’t mutate the first object, shallow clone instead.
@@ -377,7 +364,7 @@ export function buildJsx(tree, options = {}) {
  */
 function toProperty(node) {
   /** @type {Expression} */
-  var value
+  let value
 
   if (node.value) {
     if (node.value.type === 'JSXExpressionContainer') {
@@ -416,14 +403,12 @@ function toProperty(node) {
  */
 function toIdentifier(node) {
   /** @type {MemberExpression|Identifier|Literal} */
-  var replace
-  /** @type {MemberExpression|Identifier|Literal} */
-  var id
+  let replace
 
   if (node.type === 'JSXMemberExpression') {
     // `property` is always a `JSXIdentifier`, but it could be something that
     // isn’t an ES identifier name.
-    id = toIdentifier(node.property)
+    const id = toIdentifier(node.property)
     replace = {
       type: 'MemberExpression',
       object: toIdentifier(node.object),
@@ -452,15 +437,14 @@ function toIdentifier(node) {
  * @returns {Identifier|Literal|MemberExpression}
  */
 function toMemberExpression(id) {
-  var identifiers = id.split('.')
-  var index = -1
+  const identifiers = id.split('.')
+  let index = -1
   /** @type {Identifier|Literal|MemberExpression} */
-  var result
-  /** @type {Identifier|Literal} */
-  var prop
+  let result
 
   while (++index < identifiers.length) {
-    prop = isIdentifierName(identifiers[index])
+    /** @type {Identifier|Literal} */
+    const prop = isIdentifierName(identifiers[index])
       ? {type: 'Identifier', name: identifiers[index]}
       : {type: 'Literal', value: identifiers[index]}
     result = index
@@ -484,13 +468,11 @@ function toMemberExpression(id) {
  * @returns {T}
  */
 function create(from, node) {
-  var fields = ['start', 'end', 'loc', 'range', 'comments']
-  var index = -1
-  /** @type {string} */
-  var field
+  const fields = ['start', 'end', 'loc', 'range', 'comments']
+  let index = -1
 
   while (++index < fields.length) {
-    field = fields[index]
+    const field = fields[index]
     if (field in from) {
       node[field] = from[field]
     }
