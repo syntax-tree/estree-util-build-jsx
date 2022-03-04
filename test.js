@@ -22,7 +22,6 @@ test('estree-util-build-jsx', (t) => {
         computed: false,
         optional: false
       },
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {
           type: 'MemberExpression',
@@ -41,7 +40,6 @@ test('estree-util-build-jsx', (t) => {
             computed: false,
             optional: false
           },
-          // @ts-expect-error: TS is wrong.
           arguments: [{type: 'Literal', value: 'x'}],
           optional: false
         }
@@ -56,14 +54,12 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'a'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Identifier', name: 'b'},
         {type: 'Literal', value: null},
         {
           type: 'CallExpression',
           callee: {type: 'Identifier', name: 'a'},
-          // @ts-expect-error: TS is wrong.
           arguments: [{type: 'Literal', value: 'x'}],
           optional: false
         }
@@ -84,7 +80,6 @@ test('estree-util-build-jsx', (t) => {
         computed: true,
         optional: false
       },
-      // @ts-expect-error: TS is wrong.
       arguments: [{type: 'Literal', value: 'x'}],
       optional: false
     },
@@ -102,14 +97,12 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'a'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Identifier', name: 'b'},
         {type: 'Literal', value: null},
         {
           type: 'CallExpression',
           callee: {type: 'Identifier', name: 'a'},
-          // @ts-expect-error: TS is wrong.
           arguments: [{type: 'Literal', value: 'x'}],
           optional: false
         }
@@ -162,7 +155,6 @@ test('estree-util-build-jsx', (t) => {
         computed: false,
         optional: false
       },
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {
           type: 'MemberExpression',
@@ -181,7 +173,6 @@ test('estree-util-build-jsx', (t) => {
             computed: false,
             optional: false
           },
-          // @ts-expect-error: TS is wrong.
           arguments: [{type: 'Literal', value: 'x'}],
           optional: false
         }
@@ -196,7 +187,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [{type: 'Literal', value: 'a'}],
       optional: false
     },
@@ -208,7 +198,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Literal', value: null},
@@ -224,7 +213,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {
           type: 'MemberExpression',
@@ -244,7 +232,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {
           type: 'MemberExpression',
@@ -270,7 +257,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {
           type: 'MemberExpression',
@@ -296,7 +282,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {
           type: 'MemberExpression',
@@ -328,7 +313,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [{type: 'Literal', value: 'a:b'}],
       optional: false
     },
@@ -340,7 +324,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [{type: 'Literal', value: 'a-b'}],
       optional: false
     },
@@ -352,7 +335,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [{type: 'Identifier', name: 'A'}],
       optional: false
     },
@@ -364,7 +346,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -392,7 +373,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -420,7 +400,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -448,7 +427,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -476,7 +454,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -504,7 +481,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -534,7 +510,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -546,7 +521,6 @@ test('estree-util-build-jsx', (t) => {
               value: {
                 type: 'CallExpression',
                 callee: {type: 'Identifier', name: 'h'},
-                // @ts-expect-error: TS is wrong.
                 arguments: [
                   {type: 'Identifier', name: 'f'},
                   {type: 'Literal', value: null},
@@ -572,7 +546,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -584,7 +557,6 @@ test('estree-util-build-jsx', (t) => {
               value: {
                 type: 'CallExpression',
                 callee: {type: 'Identifier', name: 'h'},
-                // @ts-expect-error: TS is wrong.
                 arguments: [{type: 'Literal', value: 'c'}],
                 optional: false
               },
@@ -606,7 +578,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Identifier', name: 'b'}
@@ -621,7 +592,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -633,7 +603,6 @@ test('estree-util-build-jsx', (t) => {
             computed: false,
             optional: false
           },
-          // @ts-expect-error: TS is wrong.
           arguments: [
             {type: 'ObjectExpression', properties: []},
             {type: 'Identifier', name: 'b'},
@@ -665,7 +634,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -677,7 +645,6 @@ test('estree-util-build-jsx', (t) => {
             computed: false,
             optional: false
           },
-          // @ts-expect-error: TS is wrong.
           arguments: [
             {
               type: 'ObjectExpression',
@@ -708,7 +675,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -720,7 +686,6 @@ test('estree-util-build-jsx', (t) => {
             computed: false,
             optional: false
           },
-          // @ts-expect-error: TS is wrong.
           arguments: [
             {type: 'ObjectExpression', properties: []},
             {type: 'Identifier', name: 'b'},
@@ -739,7 +704,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {
@@ -777,7 +741,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Literal', value: null},
@@ -793,7 +756,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [{type: 'Literal', value: 'a'}],
       optional: false
     },
@@ -805,7 +767,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Literal', value: null},
@@ -821,7 +782,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Literal', value: null},
@@ -837,7 +797,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Literal', value: null},
@@ -853,7 +812,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Literal', value: null},
@@ -869,7 +827,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [
         {type: 'Literal', value: 'a'},
         {type: 'Literal', value: null},
@@ -885,7 +842,6 @@ test('estree-util-build-jsx', (t) => {
     {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
-      // @ts-expect-error: TS is wrong.
       arguments: [{type: 'Literal', value: 'a'}],
       optional: false
     },
@@ -949,7 +905,6 @@ test('estree-util-build-jsx', (t) => {
               computed: false,
               optional: false
             },
-            // @ts-expect-error: TS is wrong.
             arguments: [
               {
                 type: 'MemberExpression',
@@ -968,7 +923,6 @@ test('estree-util-build-jsx', (t) => {
                   computed: false,
                   optional: false
                 },
-                // @ts-expect-error: TS is wrong.
                 arguments: [
                   {
                     type: 'Literal',
@@ -990,7 +944,6 @@ test('estree-util-build-jsx', (t) => {
                       computed: false,
                       optional: false
                     },
-                    // @ts-expect-error: TS is wrong.
                     arguments: [
                       {
                         type: 'ObjectExpression',
@@ -1158,7 +1111,6 @@ test('estree-util-build-jsx', (t) => {
               computed: false,
               optional: false
             },
-            // @ts-expect-error: TS is wrong.
             arguments: [
               {
                 type: 'MemberExpression',
@@ -1177,7 +1129,6 @@ test('estree-util-build-jsx', (t) => {
                   computed: false,
                   optional: false
                 },
-                // @ts-expect-error: TS is wrong.
                 arguments: [{type: 'Literal', value: 'x'}],
                 optional: false
               }
