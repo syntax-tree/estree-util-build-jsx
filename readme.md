@@ -116,12 +116,12 @@ Note that `/jsx-runtime` is appended to this provided source.
 ##### `options.development`
 
 If the automatic runtime is used, this compiles JSX into automatic runtime
-development mode. (`boolean`, default: `false`)
+development mode (`boolean`, default: `false`).
 
 ###### `options.filePath`
 
 If the automatic runtime development mode is used, this option is used to
-provide a file path to map the JSX node to a source file. (`string`)
+provide a file path to map the JSX node to a source file (`string`).
 
 ###### `options.pragma`
 
