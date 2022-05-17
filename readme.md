@@ -120,8 +120,9 @@ development mode (`boolean`, default: `false`).
 
 ###### `options.filePath`
 
-If the automatic runtime development mode is used, this option is used to
-provide a file path to map the JSX node to a source file (`string`).
+File path to the original source file (`string`, example: `'path/to/file.js'`).
+Used in the location info when using the automatic runtime with
+`development: true`.
 
 ###### `options.pragma`
 
