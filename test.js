@@ -1248,7 +1248,7 @@ test('estree-util-build-jsx', (t) => {
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (fragment, jsx, settings, development)'
@@ -1270,7 +1270,7 @@ test('estree-util-build-jsx', (t) => {
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (jsxs, key, comment, development)'
@@ -1294,7 +1294,7 @@ test('estree-util-build-jsx', (t) => {
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (props, spread, children, development)'
@@ -1320,7 +1320,7 @@ test('estree-util-build-jsx', (t) => {
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (spread, props, children, development)'
@@ -1342,7 +1342,7 @@ test('estree-util-build-jsx', (t) => {
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (no props, children, development)'
@@ -1362,7 +1362,7 @@ test('estree-util-build-jsx', (t) => {
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (no props, no children, development)'
@@ -1382,7 +1382,7 @@ test('estree-util-build-jsx', (t) => {
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (key, no props, no children, development)'
@@ -1397,7 +1397,7 @@ test('estree-util-build-jsx', (t) => {
     ),
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
-      '_jsxDEV("a", {}, undefined, false);',
+      '_jsxDEV("a", {}, undefined, false, undefined, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (no props, no children, development, no filePath)'
@@ -1415,7 +1415,7 @@ test('estree-util-build-jsx', (t) => {
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
       '_jsxDEV("a", {}, undefined, false, {',
       '  fileName: "index.js"',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (no props, no children, development, no locations)'
@@ -1436,12 +1436,12 @@ test('estree-util-build-jsx', (t) => {
       '    fileName: "index.js",',
       '    lineNumber: 2,',
       '    columnNumber: 3',
-      '  })',
+      '  }, this)',
       '}, undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
-      '});',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (no props, nested children, development, positional info)'

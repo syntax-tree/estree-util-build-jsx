@@ -383,7 +383,10 @@ export function buildJsx(tree, options = {}) {
             }
 
             parameters.push(source)
+          } else {
+            parameters.push({type: 'Identifier', name: 'undefined'})
           }
+          parameters.push({type: 'ThisExpression'})
         } else if (isStaticChildren) {
           imports.jsxs = true
           callee = {type: 'Identifier', name: '_jsxs'}
