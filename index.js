@@ -338,6 +338,7 @@ export function buildJsx(tree, options = {}) {
         }
 
         const isStaticChildren = children.length > 1
+
         if (options.development) {
           imports.jsxDEV = true
           callee = {
