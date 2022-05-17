@@ -1244,7 +1244,7 @@ test('estree-util-build-jsx', (t) => {
       'import {Fragment as _Fragment, jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
       '_jsxDEV(_Fragment, {',
       '  children: "a"',
-      '}, void 0, false, {',
+      '}, undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
@@ -1290,7 +1290,7 @@ test('estree-util-build-jsx', (t) => {
       '  b: "1"',
       '}, c, {',
       '  children: "d"',
-      '}), void 0, false, {',
+      '}), undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
@@ -1316,7 +1316,7 @@ test('estree-util-build-jsx', (t) => {
       '}, {',
       '  d: "e",',
       '  children: "f"',
-      '}), void 0, false, {',
+      '}), undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
@@ -1338,7 +1338,7 @@ test('estree-util-build-jsx', (t) => {
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
       '_jsxDEV("a", {',
       '  children: "b"',
-      '}, void 0, false, {',
+      '}, undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
@@ -1358,7 +1358,7 @@ test('estree-util-build-jsx', (t) => {
     ),
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
-      '_jsxDEV("a", {}, void 0, false, {',
+      '_jsxDEV("a", {}, undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
@@ -1397,7 +1397,7 @@ test('estree-util-build-jsx', (t) => {
     ),
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
-      '_jsxDEV("a", {}, void 0, false);',
+      '_jsxDEV("a", {}, undefined, false);',
       ''
     ].join('\n'),
     'should support the automatic runtime (no props, no children, development, no filePath)'
@@ -1413,7 +1413,7 @@ test('estree-util-build-jsx', (t) => {
     ),
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
-      '_jsxDEV("a", {}, void 0, false, {',
+      '_jsxDEV("a", {}, undefined, false, {',
       '  fileName: "index.js"',
       '});',
       ''
@@ -1432,12 +1432,12 @@ test('estree-util-build-jsx', (t) => {
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
       '_jsxDEV("a", {',
-      '  children: _jsxDEV("b", {}, void 0, false, {',
+      '  children: _jsxDEV("b", {}, undefined, false, {',
       '    fileName: "index.js",',
       '    lineNumber: 2,',
       '    columnNumber: 3',
       '  })',
-      '}, void 0, false, {',
+      '}, undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',

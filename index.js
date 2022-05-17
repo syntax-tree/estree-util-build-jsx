@@ -329,12 +329,7 @@ export function buildJsx(tree, options = {}) {
         if (key) {
           parameters.push(key)
         } else if (options.development) {
-          parameters.push({
-            type: 'UnaryExpression',
-            operator: 'void',
-            prefix: true,
-            argument: {type: 'Literal', value: 0}
-          })
+          parameters.push({type: 'Identifier', name: 'undefined'})
         }
 
         const isStaticChildren = children.length > 1
