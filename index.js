@@ -361,28 +361,28 @@ export function buildJsx(tree, options = {}) {
                 }
               ]
             }
-            if (node.loc?.start.line !== undefined) {
-              source.properties.push({
-                type: 'Property',
-                method: false,
-                shorthand: false,
-                computed: false,
-                kind: 'init',
-                key: {type: 'Identifier', name: 'lineNumber'},
-                value: {type: 'Literal', value: node.loc.start.line}
-              })
-            }
 
-            if (node.loc?.start.column !== undefined) {
-              source.properties.push({
-                type: 'Property',
-                method: false,
-                shorthand: false,
-                computed: false,
-                kind: 'init',
-                key: {type: 'Identifier', name: 'columnNumber'},
-                value: {type: 'Literal', value: node.loc.start.column + 1}
-              })
+            if (node.loc) {
+              source.properties.push(
+                {
+                  type: 'Property',
+                  method: false,
+                  shorthand: false,
+                  computed: false,
+                  kind: 'init',
+                  key: {type: 'Identifier', name: 'lineNumber'},
+                  value: {type: 'Literal', value: node.loc.start.line}
+                },
+                {
+                  type: 'Property',
+                  method: false,
+                  shorthand: false,
+                  computed: false,
+                  kind: 'init',
+                  key: {type: 'Identifier', name: 'columnNumber'},
+                  value: {type: 'Literal', value: node.loc.start.column + 1}
+                }
+              )
             }
 
             parameters.push(source)
