@@ -115,8 +115,10 @@ Note that `/jsx-runtime` is appended to this provided source.
 
 ##### `options.development`
 
-If the automatic runtime is used, this compiles JSX into automatic runtime
-development mode (`boolean`, default: `false`).
+Add location info on where a component originated from (`boolean`, default:
+`false`).
+This helps debugging but adds a lot of code that you don’t want in production.
+Only used when `filePath` is and in the automatic runtime.
 
 ###### `options.filePath`
 
