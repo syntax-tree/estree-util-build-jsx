@@ -113,6 +113,16 @@ runtime is automatic (`string`, default: `'react'`).
 Comment: `@jsxImportSource theSource`.
 Note that `/jsx-runtime` is appended to this provided source.
 
+##### `options.development`
+
+If the automatic runtime is used, this compiles JSX into automatic runtime
+development mode. (`boolean`, default: `false`)
+
+###### `options.filePath`
+
+If the automatic runtime development mode is used, this option is used to
+provide a file path to map the JSX node to a source file. (`string`)
+
 ###### `options.pragma`
 
 Identifier or member expression to call when the effective runtime is classic
