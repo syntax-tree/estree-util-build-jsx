@@ -8,6 +8,7 @@ const regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
  * @typedef {import('estree-jsx').Comment} Comment
  * @typedef {import('estree-jsx').Expression} Expression
  * @typedef {import('estree-jsx').Pattern} Pattern
+ * @typedef {import('estree-jsx').ObjectExpression} ObjectExpression
  * @typedef {import('estree-jsx').Property} Property
  * @typedef {import('estree-jsx').ImportSpecifier} ImportSpecifier
  * @typedef {import('estree-jsx').SpreadElement} SpreadElement
@@ -35,6 +36,8 @@ const regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
  * @property {string} [importSource='react']
  * @property {string} [pragma='React.createElement']
  * @property {string} [pragmaFrag='React.Fragment']
+ * @property {boolean} [development=false]
+ * @property {string} [filePath]
  */
 
 /**
@@ -55,7 +58,7 @@ export function buildJsx(tree, options = {}) {
   let automatic = options.runtime === 'automatic'
   /** @type {Annotations} */
   const annotations = {}
-  /** @type {{fragment?: boolean, jsx?: boolean, jsxs?: boolean}} */
+  /** @type {{fragment?: boolean, jsx?: boolean, jsxs?: boolean, jsxDEV?: boolean}} */
   const imports = {}
 
   walk(tree, {
@@ -139,6 +142,14 @@ export function buildJsx(tree, options = {}) {
           })
         }
 
+        if (imports.jsxDEV) {
+          specifiers.push({
+            type: 'ImportSpecifier',
+            imported: {type: 'Identifier', name: 'jsxDEV'},
+            local: {type: 'Identifier', name: '_jsxDEV'}
+          })
+        }
+
         if (specifiers.length > 0) {
           node.body.unshift({
             type: 'ImportDeclaration',
@@ -148,7 +159,8 @@ export function buildJsx(tree, options = {}) {
               value:
                 (annotations.jsxImportSource ||
                   options.importSource ||
-                  'react') + '/jsx-runtime'
+                  'react') +
+                (options.development ? '/jsx-dev-runtime' : '/jsx-runtime')
             }
           })
         }
@@ -267,19 +279,21 @@ export function buildJsx(tree, options = {}) {
         )
       }
 
-      if (automatic && children.length > 0) {
-        fields.push({
-          type: 'Property',
-          key: {type: 'Identifier', name: 'children'},
-          value:
-            children.length > 1
-              ? {type: 'ArrayExpression', elements: children}
-              : children[0],
-          kind: 'init',
-          method: false,
-          shorthand: false,
-          computed: false
-        })
+      if (automatic) {
+        if (children.length > 0) {
+          fields.push({
+            type: 'Property',
+            key: {type: 'Identifier', name: 'children'},
+            value:
+              children.length > 1
+                ? {type: 'ArrayExpression', elements: children}
+                : children[0],
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false
+          })
+        }
       } else {
         parameters = children
       }
@@ -310,18 +324,73 @@ export function buildJsx(tree, options = {}) {
       }
 
       if (automatic) {
-        if (children.length > 1) {
+        parameters.push(props || {type: 'ObjectExpression', properties: []})
+
+        if (key) {
+          parameters.push(key)
+        } else if (options.development) {
+          parameters.push({
+            type: 'UnaryExpression',
+            operator: 'void',
+            prefix: true,
+            argument: {type: 'Literal', value: 0}
+          })
+        }
+
+        const isStaticChildren = children.length > 1
+        if (options.development) {
+          imports.jsxDEV = true
+          callee = {
+            type: 'Identifier',
+            name: '_jsxDEV'
+          }
+          parameters.push({type: 'Literal', value: isStaticChildren})
+          if (options.filePath) {
+            /** @type {ObjectExpression} */
+            const source = {
+              type: 'ObjectExpression',
+              properties: [
+                {
+                  type: 'Property',
+                  method: false,
+                  shorthand: false,
+                  computed: false,
+                  kind: 'init',
+                  key: {type: 'Identifier', name: 'fileName'},
+                  value: {type: 'Literal', value: options.filePath}
+                }
+              ]
+            }
+            if (node.loc?.start.line != null) {
+              source.properties.push({
+                type: 'Property',
+                method: false,
+                shorthand: false,
+                computed: false,
+                kind: 'init',
+                key: {type: 'Identifier', name: 'lineNumber'},
+                value: {type: 'Literal', value: node.loc.start.line}
+              })
+            }
+            if (node.loc?.start.column != null) {
+              source.properties.push({
+                type: 'Property',
+                method: false,
+                shorthand: false,
+                computed: false,
+                kind: 'init',
+                key: {type: 'Identifier', name: 'columnNumber'},
+                value: {type: 'Literal', value: node.loc.start.column + 1}
+              })
+            }
+            parameters.push(source)
+          }
+        } else if (isStaticChildren) {
           imports.jsxs = true
           callee = {type: 'Identifier', name: '_jsxs'}
         } else {
           imports.jsx = true
           callee = {type: 'Identifier', name: '_jsx'}
-        }
-
-        parameters.push(props || {type: 'ObjectExpression', properties: []})
-
-        if (key) {
-          parameters.push(key)
         }
       }
       // Classic.

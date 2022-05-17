@@ -1232,6 +1232,195 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (key, no props, no children)'
   )
 
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<>a</>', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {Fragment as _Fragment, jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV(_Fragment, {',
+      '  children: "a"',
+      '}, void 0, false, {',
+      '  fileName: "index.js",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (fragment, jsx, settings, development)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a key="a">b{1}</a>', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", {',
+      '  children: ["b", 1]',
+      '}, "a", true, {',
+      '  fileName: "index.js",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (jsxs, key, comment, development)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a b="1" {...c}>d</a>', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", Object.assign({',
+      '  b: "1"',
+      '}, c, {',
+      '  children: "d"',
+      '}), void 0, false, {',
+      '  fileName: "index.js",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (props, spread, children, development)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", Object.assign({',
+      '  b: 1,',
+      '  c: 2',
+      '}, {',
+      '  d: "e",',
+      '  children: "f"',
+      '}), void 0, false, {',
+      '  fileName: "index.js",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (spread, props, children, development)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a>b</a>', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", {',
+      '  children: "b"',
+      '}, void 0, false, {',
+      '  fileName: "index.js",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (no props, children, development)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a/>', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", {}, void 0, false, {',
+      '  fileName: "index.js",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (no props, no children, development)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a key/>', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", {}, true, false, {',
+      '  fileName: "index.js",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (key, no props, no children, development)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a />', false), {
+        runtime: 'automatic',
+        development: true
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", {}, void 0, false);',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (no props, no children, development, no filePath)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a />'), {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", {}, void 0, false, {',
+      '  fileName: "index.js"',
+      '});',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (no props, no children, development, no locations)'
+  )
+
   t.throws(
     () => {
       buildJsx(parse('<a {...b} key/>'), {runtime: 'automatic'})
