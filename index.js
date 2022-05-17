@@ -346,6 +346,7 @@ export function buildJsx(tree, options = {}) {
             name: '_jsxDEV'
           }
           parameters.push({type: 'Literal', value: isStaticChildren})
+
           if (options.filePath) {
             /** @type {ObjectExpression} */
             const source = {
