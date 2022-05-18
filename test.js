@@ -1397,10 +1397,34 @@ test('estree-util-build-jsx', (t) => {
     ),
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
-      '_jsxDEV("a", {}, undefined, false, undefined, this);',
+      '_jsxDEV("a", {}, undefined, false, {',
+      '  fileName: "<source.js>",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '}, this);',
       ''
     ].join('\n'),
     'should support the automatic runtime (no props, no children, development, no filePath)'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse('<a />', false), {
+        runtime: 'automatic',
+        development: true,
+        filePath: ''
+      })
+    ),
+    [
+      'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
+      '_jsxDEV("a", {}, undefined, false, {',
+      '  fileName: "<source.js>",',
+      '  lineNumber: 1,',
+      '  columnNumber: 1',
+      '}, this);',
+      ''
+    ].join('\n'),
+    'should support the automatic runtime (no props, no children, development, empty filePath)'
   )
 
   t.deepEqual(

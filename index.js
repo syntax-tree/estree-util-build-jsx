@@ -342,51 +342,49 @@ export function buildJsx(tree, options = {}) {
           }
           parameters.push({type: 'Literal', value: isStaticChildren})
 
-          if (options.filePath) {
-            /** @type {ObjectExpression} */
-            const source = {
-              type: 'ObjectExpression',
-              properties: [
-                {
-                  type: 'Property',
-                  method: false,
-                  shorthand: false,
-                  computed: false,
-                  kind: 'init',
-                  key: {type: 'Identifier', name: 'fileName'},
-                  value: {type: 'Literal', value: options.filePath}
+          /** @type {ObjectExpression} */
+          const source = {
+            type: 'ObjectExpression',
+            properties: [
+              {
+                type: 'Property',
+                method: false,
+                shorthand: false,
+                computed: false,
+                kind: 'init',
+                key: {type: 'Identifier', name: 'fileName'},
+                value: {
+                  type: 'Literal',
+                  value: options.filePath || '<source.js>'
                 }
-              ]
-            }
-
-            if (node.loc) {
-              source.properties.push(
-                {
-                  type: 'Property',
-                  method: false,
-                  shorthand: false,
-                  computed: false,
-                  kind: 'init',
-                  key: {type: 'Identifier', name: 'lineNumber'},
-                  value: {type: 'Literal', value: node.loc.start.line}
-                },
-                {
-                  type: 'Property',
-                  method: false,
-                  shorthand: false,
-                  computed: false,
-                  kind: 'init',
-                  key: {type: 'Identifier', name: 'columnNumber'},
-                  value: {type: 'Literal', value: node.loc.start.column + 1}
-                }
-              )
-            }
-
-            parameters.push(source)
-          } else {
-            parameters.push({type: 'Identifier', name: 'undefined'})
+              }
+            ]
           }
-          parameters.push({type: 'ThisExpression'})
+
+          if (node.loc) {
+            source.properties.push(
+              {
+                type: 'Property',
+                method: false,
+                shorthand: false,
+                computed: false,
+                kind: 'init',
+                key: {type: 'Identifier', name: 'lineNumber'},
+                value: {type: 'Literal', value: node.loc.start.line}
+              },
+              {
+                type: 'Property',
+                method: false,
+                shorthand: false,
+                computed: false,
+                kind: 'init',
+                key: {type: 'Identifier', name: 'columnNumber'},
+                value: {type: 'Literal', value: node.loc.start.column + 1}
+              }
+            )
+          }
+
+          parameters.push(source, {type: 'ThisExpression'})
         } else if (isStaticChildren) {
           imports.jsxs = true
           callee = {type: 'Identifier', name: '_jsxs'}
