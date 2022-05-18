@@ -113,6 +113,19 @@ runtime is automatic (`string`, default: `'react'`).
 Comment: `@jsxImportSource theSource`.
 Note that `/jsx-runtime` is appended to this provided source.
 
+##### `options.development`
+
+Add location info on where a component originated from (`boolean`, default:
+`false`).
+This helps debugging but adds a lot of code that you don’t want in production.
+Only used in the automatic runtime.
+
+###### `options.filePath`
+
+File path to the original source file (`string`, example: `'path/to/file.js'`).
+Used in the location info when using the automatic runtime with
+`development: true`.
+
 ###### `options.pragma`
 
 Identifier or member expression to call when the effective runtime is classic
