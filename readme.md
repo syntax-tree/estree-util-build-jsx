@@ -8,29 +8,62 @@
 [![Backers][backers-badge]][collective]
 [![Chat][chat-badge]][chat]
 
-Transform JSX to function calls: `<x />` -> `h('x')`!
+[estree][] utility to turn JSX into function calls: `<x />` -> `h('x')`!
 
-There is currently one project actively maintained that can transform JSX to
-function calls: Babel.
-Babel is amazing but ginormous (±300kb) and slow.
-Switching from it to [estree][] in a project where Babel was only a small part
-made the whole project [**68% smaller and 63% faster**][pr].
-So let’s make that two implementations.
+## Contents
+
+*   [What is this?](#what-is-this)
+*   [When should I use this?](#when-should-i-use-this)
+*   [Install](#install)
+*   [Use](#use)
+*   [API](#api)
+    *   [`buildJsx(tree, options?)`](#buildjsxtree-options)
+*   [Examples](#examples)
+    *   [Example: use with Acorn](#example-use-with-acorn)
+*   [Algorithm](#algorithm)
+*   [Types](#types)
+*   [Compatibility](#compatibility)
+*   [Related](#related)
+*   [Contribute](#contribute)
+*   [License](#license)
+
+## What is this?
+
+This package is a utility that takes an [estree][] (JavaScript) syntax tree as
+input that contains embedded JSX nodes (elements, fragments) and turns them into
+function calls.
+
+## When should I use this?
+
+If you already have a tree and only need to compile JSX away, use this.
+If you have code, using something like [SWC][] or [esbuild][] instead.
 
 ## Install
 
-This package is ESM only: Node 12+ is needed to use it and it must be `import`ed
-instead of `require`d.
-
-[npm][]:
+This package is [ESM only][esm].
+In Node.js (version 12.20+, 14.14+, or 16.0+), install with [npm][]:
 
 ```sh
 npm install estree-util-build-jsx
 ```
 
+In Deno with [`esm.sh`][esmsh]:
+
+```js
+import {buildJsx} from 'https://esm.sh/estree-util-build-jsx@2'
+```
+
+In browsers with [`esm.sh`][esmsh]:
+
+```html
+<script type="module">
+  import {buildJsx} from 'https://esm.sh/estree-util-build-jsx@2?bundle'
+</script>
+```
+
 ## Use
 
-Say we have the following file, `example.jsx`:
+Say we have the following `example.jsx`:
 
 ```js
 import x from 'xastscript'
@@ -52,20 +85,20 @@ console.log(
 )
 ```
 
-And our script, `example.js`, looks as follows:
+…and next to it a module `example.js`:
 
 ```js
-import fs from 'node:fs'
+import fs from 'node:fs/promises'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 import {generate} from 'astring'
 import {buildJsx} from 'estree-util-build-jsx'
 
-const doc = fs.readFileSync('example.jsx')
+const doc = String(await fs.readFile('example.jsx'))
 
 const tree = Parser.extend(jsx()).parse(doc, {
   sourceType: 'module',
-  ecmaVersion: 2020
+  ecmaVersion: 2022
 })
 
 buildJsx(tree, {pragma: 'x', pragmaFrag: 'null'})
@@ -73,7 +106,7 @@ buildJsx(tree, {pragma: 'x', pragmaFrag: 'null'})
 console.log(generate(tree))
 ```
 
-Now, running `node example` yields:
+…now running `node example.js` yields:
 
 ```js
 import x from 'xastscript';
@@ -91,32 +124,67 @@ console.log(x(null, null, 1 + 1, x("self-closing"), x("x", Object.assign({
 
 ## API
 
-This package exports the following identifiers: `buildJsx`.
+This package exports the identifier `buildJsx`.
 There is no default export.
 
 ### `buildJsx(tree, options?)`
 
-Turn JSX in `tree` ([`Program`][program]) into hyperscript calls.
+Turn JSX in `tree` ([`Program`][program]) into function calls:
+`<x />` -> `h('x')`!
 
 ##### `options`
 
+Configuration (optional).
+
+> 👉 **Note**: you can also configure `runtime`, `importSource`, `pragma`, and
+> `pragmaFrag` from within files through comments.
+
 ###### `options.runtime`
 
-Choose the [runtime][].
+Choose the [runtime][]
 (`string`, `'automatic'` or `'classic'`, default: `'classic'`).
+
 Comment form: `@jsxRuntime theRuntime`.
 
 ###### `options.importSource`
 
-Place to import `jsx`, `jsxs`, and/or `Fragment` from, when the effective
-runtime is automatic (`string`, default: `'react'`).
-Comment: `@jsxImportSource theSource`.
-Note that `/jsx-runtime` is appended to this provided source.
+Place to import `jsx`, `jsxs`, `jsxDEV`, and/or `Fragment` from, when the
+effective runtime is automatic (`string`, default: `'react'`).
 
-##### `options.development`
+Comment form: `@jsxImportSource theSource`.
 
-Add location info on where a component originated from (`boolean`, default:
-`false`).
+> 👉 **Note**: `/jsx-runtime` or `/jsx-dev-runtime` is appended to this provided
+> source.
+> In CJS, that can resolve to a file, as in `theSource/jsx-runtime.js`, but for
+> ESM an export map needs to be set up to point to files:
+>
+> ```js
+> // …
+> "exports": {
+>   // …
+>   "./jsx-runtime": "./path/to/jsx-runtime.js",
+>   "./jsx-dev-runtime": "./path/to/jsx-runtime.js"
+>   // …
+> ```
+
+###### `options.pragma`
+
+Identifier or member expression to call when the effective runtime is classic
+(`string`, default: `'React.createElement'`).
+
+Comment form: `@jsx identifier`.
+
+###### `options.pragmaFrag`
+
+Identifier or member expression to use as a symbol for fragments when the
+effective runtime is classic (`string`, default: `'React.Fragment'`).
+
+Comment form: `@jsxFrag identifier`.
+
+###### `options.development`
+
+Import `jsxDEV` from `theSource/jsx-dev-runtime.js` and add location info on
+where a component originated from (`boolean`, default: `false`).
 This helps debugging but adds a lot of code that you don’t want in production.
 Only used in the automatic runtime.
 
@@ -126,58 +194,71 @@ File path to the original source file (`string`, example: `'path/to/file.js'`).
 Used in the location info when using the automatic runtime with
 `development: true`.
 
-###### `options.pragma`
+##### Returns
 
-Identifier or member expression to call when the effective runtime is classic
-(`string`, default: `'React.createElement'`).
-Comment: `@jsx identifier`.
+The given `tree` (`Node`).
 
-###### `options.pragmaFrag`
+## Examples
 
-Identifier or member expression to use as a sumbol for fragments when the
-effective runtime is classic (`string`, default: `'React.Fragment'`).
-Comment: `@jsxFrag identifier`.
+### Example: use with Acorn
 
-###### Returns
-
-`Node` — The given `tree`.
-
-###### Notes
-
-To support configuration from comments, those comments have to be in the
-program.
-This is done automatically by [`espree`][espree].
-For [`acorn`][acorn], it can be done like so:
+To support configuration from comments in Acorn, those comments have to be in
+the program.
+This is done by [`espree`][espree] but not automatically by [`acorn`][acorn]:
 
 ```js
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 
-var doc = ''
+const doc = '' // To do: get `doc` somehow.
 
-var comments = []
-var tree = Parser.extend(jsx()).parse(doc, {onComment: comments})
+const comments = []
+const tree = Parser.extend(jsx()).parse(doc, {onComment: comments})
 tree.comments = comments
 ```
+
+## Algorithm
 
 In almost all cases, this utility is the same as the Babel plugin, except that
 they work on slightly different syntax trees.
 
 Some differences:
 
-*   No pure annotations or dev things
+*   No pure annotations things
 *   `this` is not a component: `<this>` -> `h('this')`, not `h(this)`
 *   Namespaces are supported: `<a:b c:d>` -> `h('a:b', {'c:d': true})`,
     which throws by default in Babel or can be turned on with `throwIfNamespace`
 *   No `useSpread`, `useBuiltIns`, or `filter` options
 
+## Types
+
+This package is fully typed with [TypeScript][].
+It exports the types `Options` and `Node`.
+
+## Compatibility
+
+Projects maintained by the unified collective are compatible with all maintained
+versions of Node.js.
+As of now, that is Node.js 12.20+, 14.14+, and 16.0+.
+Our projects sometimes work with older versions, but this is not guaranteed.
+
 ## Related
 
 *   [`syntax-tree/hast-util-to-estree`](https://github.com/syntax-tree/hast-util-to-estree)
-    — Transform [hast](https://github.com/syntax-tree/hast) (HTML) to [estree][]
+    — turn [hast](https://github.com/syntax-tree/hast) (HTML) to [estree][]
     JSX
 *   [`coderaiser/estree-to-babel`](https://github.com/coderaiser/estree-to-babel)
-    — Transform [estree][] to Babel trees
+    — turn [estree][] to Babel trees
+
+## Contribute
+
+See [`contributing.md` in `syntax-tree/.github`][contributing] for ways to get
+started.
+See [`support.md`][support] for ways to get help.
+
+This project has a [code of conduct][coc].
+By interacting with this repository, organization, or community you agree to
+abide by its terms.
 
 ## License
 
@@ -211,11 +292,23 @@ Some differences:
 
 [chat]: https://github.com/syntax-tree/unist/discussions
 
+[esm]: https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+
 [npm]: https://docs.npmjs.com/cli/install
+
+[esmsh]: https://esm.sh
 
 [license]: license
 
 [author]: https://wooorm.com
+
+[typescript]: https://www.typescriptlang.org
+
+[contributing]: https://github.com/syntax-tree/.github/blob/main/contributing.md
+
+[support]: https://github.com/syntax-tree/.github/blob/main/support.md
+
+[coc]: https://github.com/syntax-tree/.github/blob/main/code-of-conduct.md
 
 [acorn]: https://github.com/acornjs/acorn
 
@@ -225,6 +318,8 @@ Some differences:
 
 [program]: https://github.com/estree/estree/blob/master/es5.md#programs
 
-[pr]: https://github.com/mdx-js/mdx/pull/1399
-
 [runtime]: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
+
+[swc]: https://swc.rs
+
+[esbuild]: https://esbuild.github.io
