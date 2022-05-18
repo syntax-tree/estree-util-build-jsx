@@ -1,6 +1,5 @@
 import test from 'tape'
 import {Parser} from 'acorn'
-// @ts-ignore
 import jsx from 'acorn-jsx'
 import {walk} from 'estree-walker'
 import {generate} from 'astring'
@@ -1511,15 +1510,15 @@ function expression(program) {
  * @returns {import('estree-jsx').Program}
  */
 function parse(doc, clean, addComments) {
-  /** @type {import('estree-jsx').Comment[]} */
+  /** @type {Array<import('estree-jsx').Comment>} */
   const comments = []
   /** @type {import('estree-jsx').Program} */
-  // @ts-ignore
+  // @ts-expect-error
   const tree = parser.parse(doc, {
     ecmaVersion: 2020,
     ranges: true,
     locations: true,
-    // @ts-ignore
+    // @ts-expect-error
     onComment: comments
   })
 
@@ -1537,11 +1536,11 @@ function parse(doc, clean, addComments) {
   function leave(n) {
     delete n.loc
     delete n.range
-    // @ts-ignore
+    // @ts-expect-error
     delete n.start
-    // @ts-ignore
+    // @ts-expect-error
     delete n.end
-    // @ts-ignore
+    // @ts-expect-error
     delete n.raw
   }
 }

@@ -1,8 +1,3 @@
-import {walk} from 'estree-walker'
-import {name as isIdentifierName} from 'estree-util-is-identifier-name'
-
-const regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
-
 /**
  * @typedef {import('estree-jsx').Node} Node
  * @typedef {import('estree-jsx').Comment} Comment
@@ -28,25 +23,26 @@ const regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
  * @typedef {import('estree-jsx').JSXIdentifier} JSXIdentifier
  *
  * @typedef {import('estree-walker').SyncHandler} SyncHandler
- */
-
-/**
- * @typedef {Object} BuildJsxOptions
+ *
+ * @typedef BuildJsxOptions
  * @property {'automatic'|'classic'} [runtime='classic']
  * @property {string} [importSource='react']
  * @property {string} [pragma='React.createElement']
  * @property {string} [pragmaFrag='React.Fragment']
  * @property {boolean} [development=false]
  * @property {string} [filePath]
- */
-
-/**
- * @typedef {Object} Annotations
+ *
+ * @typedef Annotations
  * @property {'automatic'|'classic'} [jsxRuntime]
  * @property {string} [jsx]
  * @property {string} [jsxFrag]
  * @property {string} [jsxImportSource]
  */
+
+import {walk} from 'estree-walker'
+import {name as isIdentifierName} from 'estree-util-is-identifier-name'
+
+const regex = /@(jsx|jsxFrag|jsxImportSource|jsxRuntime)\s+(\S+)/g
 
 /**
  * @template {Node} T
@@ -170,7 +166,7 @@ export function buildJsx(tree, options = {}) {
         return
       }
 
-      /** @type {Array.<Expression>} */
+      /** @type {Array<Expression>} */
       const children = []
       let index = -1
 
@@ -201,19 +197,20 @@ export function buildJsx(tree, options = {}) {
             children.push(create(child, {type: 'Literal', value}))
           }
         } else {
-          // @ts-ignore JSX{Element,Fragment} have already been compiled, and
-          // `JSXSpreadChild` is not supported in Babel either, so ignore it.
+          // @ts-expect-error JSX{Element,Fragment} have already been compiled,
+          // and `JSXSpreadChild` is not supported in Babel either, so ignore
+          // it.
           children.push(child)
         }
       }
 
       /** @type {MemberExpression|Literal|Identifier} */
       let name
-      /** @type {Array.<Property>} */
+      /** @type {Array<Property>} */
       let fields = []
-      /** @type {Array.<Expression>} */
+      /** @type {Array<Expression>} */
       const objects = []
-      /** @type {Array.<Expression|SpreadElement>} */
+      /** @type {Array<Expression|SpreadElement>} */
       let parameters = []
       /** @type {Expression|undefined} */
       let key
@@ -260,8 +257,8 @@ export function buildJsx(tree, options = {}) {
                 )
               }
 
-              // @ts-ignore I can’t see object patterns being used as attribute
-              // values? 🤷‍♂️
+              // @ts-expect-error I can’t see object patterns being used as
+              // attribute values? 🤷‍♂️
               key = prop.value
             } else {
               fields.push(prop)
@@ -431,15 +428,15 @@ function toProperty(node) {
 
   if (node.value) {
     if (node.value.type === 'JSXExpressionContainer') {
-      // @ts-ignore `JSXEmptyExpression` is not allowed in props.
+      // @ts-expect-error `JSXEmptyExpression` is not allowed in props.
       value = node.value.expression
     }
     // Literal or call expression.
     else {
-      // @ts-ignore: JSX{Element,Fragment} are already compiled to
+      // @ts-expect-error: JSX{Element,Fragment} are already compiled to
       // `CallExpression`.
       value = node.value
-      // @ts-ignore - Remove `raw` so we don’t get character references in
+      // @ts-expect-error Remove `raw` so we don’t get character references in
       // strings.
       delete value.raw
     }
