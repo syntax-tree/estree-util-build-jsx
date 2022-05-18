@@ -1,5 +1,5 @@
 {
-  "include": ["*.js"],
+  "include": ["lib/**/*.js", "*.js"],
   "compilerOptions": {
     "target": "es2022",
     "lib": ["es2022"],
