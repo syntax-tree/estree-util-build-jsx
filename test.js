@@ -1486,6 +1486,20 @@ test('estree-util-build-jsx', (t) => {
     'should prefer a `jsxRuntime` comment over a `runtime` option'
   )
 
+  t.deepEqual(
+    generate(buildJsx(parse(['<a>', '  line1', '</a>'].join('\n')))),
+    'React.createElement("a", null, "line1");\n',
+    'should trim all strings'
+  )
+
+  t.deepEqual(
+    generate(
+      buildJsx(parse(['<a>', '  line1{" "}', '  line2', '</a>'].join('\n')))
+    ),
+    'React.createElement("a", null, "line1", " ", "line2");\n',
+    'should trim all strings'
+  )
+
   t.end()
 })
 
