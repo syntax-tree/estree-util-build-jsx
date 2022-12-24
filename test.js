@@ -1538,7 +1538,6 @@ function parse(doc, clean, addComments) {
 
   if (addComments !== false) tree.comments = comments
 
-  // @ts-expect-error: types are wrong.
   if (clean !== false) walk(tree, {leave})
 
   return JSON.parse(JSON.stringify(tree))
