@@ -1,7 +1,9 @@
 import test from 'tape'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
+// @ts-expect-error: typed incorrectly.
 import {walk} from 'estree-walker'
+// @ts-expect-error: typed incorrectly.
 import {generate} from 'astring'
 import recast from 'recast'
 import escodegen from 'escodegen'
@@ -1567,7 +1569,6 @@ function parse(doc, clean, addComments) {
   return JSON.parse(JSON.stringify(tree))
 
   /**
-   * @type {import('estree-walker').SyncHandler}
    * @param {import('estree-jsx').Node} n
    */
   function leave(n) {
