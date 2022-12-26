@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@types/escodegen": "^0.0.6",
-    "@types/tape": "^4.0.0",
+    "@types/node": "^18.0.0",
     "acorn": "^8.0.0",
     "acorn-jsx": "^5.0.0",
     "astring": "^1.0.0",
@@ -58,7 +58,6 @@
     "recast": "^0.22.0",
     "remark-cli": "^11.0.0",
     "remark-preset-wooorm": "^9.0.0",
-    "tape": "^5.0.0",
     "type-coverage": "^2.0.0",
     "typescript": "^4.0.0",
     "xo": "^0.53.0"

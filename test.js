@@ -1,4 +1,5 @@
-import test from 'tape'
+import assert from 'node:assert/strict'
+import test from 'node:test'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 // @ts-expect-error: typed incorrectly.
@@ -11,8 +12,8 @@ import {buildJsx} from './index.js'
 
 const parser = Parser.extend(jsx())
 
-test('estree-util-build-jsx', (t) => {
-  t.deepEqual(
+test('estree-util-build-jsx', () => {
+  assert.deepEqual(
     expression(buildJsx(parse('<><x /></>'))),
     {
       type: 'CallExpression',
@@ -50,7 +51,7 @@ test('estree-util-build-jsx', (t) => {
     'should default to `React.createElement` / `React.Fragment`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<><x /></>'), {pragma: 'a', pragmaFrag: 'b'})),
     {
       type: 'CallExpression',
@@ -70,7 +71,7 @@ test('estree-util-build-jsx', (t) => {
     'should support `pragma`, `pragmaFrag`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
     {
       type: 'CallExpression',
@@ -87,13 +88,13 @@ test('estree-util-build-jsx', (t) => {
     'should support `pragma` w/ non-identifiers (1)'
   )
 
-  t.equal(
+  assert.equal(
     generate(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
     'a["b-c"]("x");\n',
     'should support `pragma` w/ non-identifiers (2)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('/* @jsx a @jsxFrag b */\n<><x /></>'))),
     {
       type: 'CallExpression',
@@ -113,7 +114,7 @@ test('estree-util-build-jsx', (t) => {
     'should support `@jsx`, `@jsxFrag` comments'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       buildJsx(parse('/* @jsx a @jsxRuntime automatic */'))
     },
@@ -121,7 +122,7 @@ test('estree-util-build-jsx', (t) => {
     'should throw when `@jsx` is set in the automatic runtime'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       buildJsx(parse('/* @jsxFrag a @jsxRuntime automatic */'))
     },
@@ -129,7 +130,7 @@ test('estree-util-build-jsx', (t) => {
     'should throw when `@jsxFrag` is set in the automatic runtime'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       buildJsx(parse('/* @jsxImportSource a @jsxRuntime classic */'))
     },
@@ -137,7 +138,7 @@ test('estree-util-build-jsx', (t) => {
     'should throw when `@jsxImportSource` is set in the classic runtime'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       buildJsx(parse('/* @jsxRuntime a */'))
     },
@@ -145,7 +146,7 @@ test('estree-util-build-jsx', (t) => {
     'should throw on a non-automatic nor classic `@jsxRuntime`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('// a\n<><x /></>'))),
     {
       type: 'CallExpression',
@@ -183,7 +184,7 @@ test('estree-util-build-jsx', (t) => {
     'should ignore other comments'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -194,7 +195,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a self-closing element'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a>b</a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -209,7 +210,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a closed element'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a.b />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -228,7 +229,7 @@ test('estree-util-build-jsx', (t) => {
     'should support dots in a tag name for member expressions'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -247,13 +248,13 @@ test('estree-util-build-jsx', (t) => {
     'should support dots *and* dashes in tag names (1)'
   )
 
-  t.equal(
+  assert.equal(
     generate(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
     'h(a["b-c"]);\n',
     'should support dots *and* dashes in tag names (2)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -272,13 +273,13 @@ test('estree-util-build-jsx', (t) => {
     'should support dots *and* dashes in tag names (3)'
   )
 
-  t.equal(
+  assert.equal(
     generate(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
     'h(("a-b").c);\n',
     'should support dots *and* dashes in tag names (4)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a.b.c.d />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -309,7 +310,7 @@ test('estree-util-build-jsx', (t) => {
     'should support dots in a tag name for member expressions (2)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a:b />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -320,7 +321,7 @@ test('estree-util-build-jsx', (t) => {
     'should support colons in a tag name for namespaces'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a-b />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -331,7 +332,7 @@ test('estree-util-build-jsx', (t) => {
     'should support dashes in tag names'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<A />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -342,7 +343,7 @@ test('estree-util-build-jsx', (t) => {
     'should non-lowercase for components in tag names'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -369,7 +370,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a boolean prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b:c />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -396,7 +397,7 @@ test('estree-util-build-jsx', (t) => {
     'should support colons in prop names'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b-c />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -423,7 +424,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a prop name that can’t be an identifier'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b="c" />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -450,7 +451,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a prop value'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b={c} />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -477,7 +478,7 @@ test('estree-util-build-jsx', (t) => {
     'should support an expression as a prop value'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b={1} />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -504,7 +505,7 @@ test('estree-util-build-jsx', (t) => {
     'should support an expression as a prop value (2)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(
       buildJsx(parse('<a b=<>c</> />'), {pragma: 'h', pragmaFrag: 'f'})
     ),
@@ -542,7 +543,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a fragment as a prop value'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b=<c /> />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -574,7 +575,7 @@ test('estree-util-build-jsx', (t) => {
     'should support an element as a prop value'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a {...b} />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -588,7 +589,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a single spread prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a {...b} c />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -630,7 +631,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a spread prop and another prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a b {...c} />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -671,7 +672,7 @@ test('estree-util-build-jsx', (t) => {
     'should support a prop and a spread prop'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a {...b} {...c} />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -700,7 +701,7 @@ test('estree-util-build-jsx', (t) => {
     'should support two spread props'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a {...{b:1,...c,d:2}} />'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -737,7 +738,7 @@ test('estree-util-build-jsx', (t) => {
     'should support more complex spreads'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a>{1}</a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -752,7 +753,7 @@ test('estree-util-build-jsx', (t) => {
     'should support expressions content'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a>{}</a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -763,7 +764,7 @@ test('estree-util-build-jsx', (t) => {
     'should support empty expressions content'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a>  b</a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -778,7 +779,7 @@ test('estree-util-build-jsx', (t) => {
     'should support initial spaces in content'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a>b  </a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -793,7 +794,7 @@ test('estree-util-build-jsx', (t) => {
     'should support final spaces in content'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a>  b  </a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -808,7 +809,7 @@ test('estree-util-build-jsx', (t) => {
     'should support initial and final spaces in content'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a> b \r c \n d \n </a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -823,7 +824,7 @@ test('estree-util-build-jsx', (t) => {
     'should support spaces around line endings'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a> b \r \n c \n\n d \n </a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -838,7 +839,7 @@ test('estree-util-build-jsx', (t) => {
     'should support skip empty or whitespace only line endings'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(buildJsx(parse('<a> \t\n </a>'), {pragma: 'h'})),
     {
       type: 'CallExpression',
@@ -849,7 +850,7 @@ test('estree-util-build-jsx', (t) => {
     'should support skip whitespace only content'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(
       buildJsx(parse(['<a>', '  line1', '</a>'].join('\n')), {pragma: 'h'})
     ),
@@ -866,7 +867,7 @@ test('estree-util-build-jsx', (t) => {
     'should trim strings with leading line feed'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     expression(
       buildJsx(parse(['<a>', '  line1{" "}', '  line2', '</a>'].join('\n')), {
         pragma: 'h'
@@ -887,7 +888,7 @@ test('estree-util-build-jsx', (t) => {
     'should trim strings with leading line feed (multiline test)'
   )
 
-  t.equal(
+  assert.equal(
     generate(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
         pragma: 'h',
@@ -898,7 +899,7 @@ test('estree-util-build-jsx', (t) => {
     'should integrate w/ generators (`astring`)'
   )
 
-  t.equal(
+  assert.equal(
     recast.print(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
         pragma: 'h',
@@ -909,7 +910,7 @@ test('estree-util-build-jsx', (t) => {
     'should integrate w/ generators (`recast`)'
   )
 
-  t.equal(
+  assert.equal(
     escodegen.generate(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
         pragma: 'h',
@@ -920,7 +921,7 @@ test('estree-util-build-jsx', (t) => {
     'should integrate w/ generators (`escodegen`)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>', false)),
     {
       type: 'Program',
@@ -1134,7 +1135,7 @@ test('estree-util-build-jsx', (t) => {
     'should support positional info'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     buildJsx(parse('<><x /></>', true, false)),
     {
       type: 'Program',
@@ -1181,7 +1182,7 @@ test('estree-util-build-jsx', (t) => {
     'should support no comments on `program`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(buildJsx(parse('<>a</>'), {runtime: 'automatic'})),
     [
       'import {Fragment as _Fragment, jsx as _jsx} from "react/jsx-runtime";',
@@ -1193,7 +1194,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (fragment, jsx, settings)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(buildJsx(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))),
     [
       'import {jsxs as _jsxs} from "react/jsx-runtime";',
@@ -1205,7 +1206,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (jsxs, key, comment)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(buildJsx(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
@@ -1219,7 +1220,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (props, spread, children)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>'), {
         runtime: 'automatic'
@@ -1239,7 +1240,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (spread, props, children)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(buildJsx(parse('<a>b</a>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
@@ -1251,7 +1252,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, children)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(buildJsx(parse('<a/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
@@ -1261,7 +1262,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, no children)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(buildJsx(parse('<a key/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
@@ -1271,7 +1272,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (key, no props, no children)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<>a</>', false), {
         runtime: 'automatic',
@@ -1293,7 +1294,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (fragment, jsx, settings, development)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a key="a">b{1}</a>', false), {
         runtime: 'automatic',
@@ -1315,7 +1316,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (jsxs, key, comment, development)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a b="1" {...c}>d</a>', false), {
         runtime: 'automatic',
@@ -1339,7 +1340,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (props, spread, children, development)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>', false), {
         runtime: 'automatic',
@@ -1365,7 +1366,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (spread, props, children, development)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a>b</a>', false), {
         runtime: 'automatic',
@@ -1387,7 +1388,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, children, development)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a/>', false), {
         runtime: 'automatic',
@@ -1407,7 +1408,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, no children, development)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a key/>', false), {
         runtime: 'automatic',
@@ -1427,7 +1428,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (key, no props, no children, development)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a />', false), {
         runtime: 'automatic',
@@ -1446,7 +1447,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, no children, development, no filePath)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a />', false), {
         runtime: 'automatic',
@@ -1466,7 +1467,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, no children, development, empty filePath)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a />'), {
         runtime: 'automatic',
@@ -1484,7 +1485,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, no children, development, no locations)'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('<a>\n  <b />\n</a>', false), {
         runtime: 'automatic',
@@ -1510,7 +1511,7 @@ test('estree-util-build-jsx', (t) => {
     'should support the automatic runtime (no props, nested children, development, positional info)'
   )
 
-  t.throws(
+  assert.throws(
     () => {
       buildJsx(parse('<a {...b} key/>'), {runtime: 'automatic'})
     },
@@ -1518,15 +1519,13 @@ test('estree-util-build-jsx', (t) => {
     'should throw on spread after `key`'
   )
 
-  t.deepEqual(
+  assert.deepEqual(
     generate(
       buildJsx(parse('/*@jsxRuntime classic*/ <a/>'), {runtime: 'automatic'})
     ),
     'React.createElement("a");\n',
     'should prefer a `jsxRuntime` comment over a `runtime` option'
   )
-
-  t.end()
 })
 
 /**
