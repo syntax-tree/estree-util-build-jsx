@@ -847,6 +847,44 @@ test('estree-util-build-jsx', (t) => {
     'should support skip whitespace only content'
   )
 
+  t.deepEqual(
+    expression(
+      buildJsx(parse(['<a>', '  line1', '</a>'].join('\n')), {pragma: 'h'})
+    ),
+    {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {type: 'Literal', value: null},
+        {type: 'Literal', value: 'line1'}
+      ],
+      optional: false
+    },
+    'should trim strings with leading line feed'
+  )
+
+  t.deepEqual(
+    expression(
+      buildJsx(parse(['<a>', '  line1{" "}', '  line2', '</a>'].join('\n')), {
+        pragma: 'h'
+      })
+    ),
+    {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {type: 'Literal', value: null},
+        {type: 'Literal', value: 'line1'},
+        {type: 'Literal', value: ' '},
+        {type: 'Literal', value: 'line2'}
+      ],
+      optional: false
+    },
+    'should trim strings with leading line feed (multiline test)'
+  )
+
   t.equal(
     generate(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
@@ -1524,7 +1562,6 @@ function parse(doc, clean, addComments) {
 
   if (addComments !== false) tree.comments = comments
 
-  // @ts-expect-error: types are wrong.
   if (clean !== false) walk(tree, {leave})
 
   return JSON.parse(JSON.stringify(tree))
