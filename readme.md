@@ -156,7 +156,7 @@ Comment form: `@jsxImportSource theSource`.
 
 > 👉 **Note**: `/jsx-runtime` or `/jsx-dev-runtime` is appended to this provided
 > source.
-> In CJS, that can resolve to a file, as in `theSource/jsx-runtime.js`, but for
+> In CJS, that can resolve to a file (as in `theSource/jsx-runtime.js`), but for
 > ESM an export map needs to be set up to point to files:
 >
 > ```js
