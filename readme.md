@@ -161,13 +161,15 @@ Configuration (TypeScript type).
 > 👉 **Note**: you can also configure `runtime`, `importSource`, `pragma`, and
 > `pragmaFrag` from within files through comments.
 
-###### `options.runtime`
+##### Fields
+
+###### `runtime`
 
 Choose the [runtime][jsx-runtime] ([`Runtime`][runtime], default: `'classic'`).
 
 Comment form: `@jsxRuntime theRuntime`.
 
-###### `options.importSource`
+###### `importSource`
 
 Place to import `jsx`, `jsxs`, `jsxDEV`, and `Fragment` from, when the
 effective runtime is automatic (`string`, default: `'react'`).
@@ -188,28 +190,28 @@ Comment form: `@jsxImportSource theSource`.
 >   // …
 > ```
 
-###### `options.pragma`
+###### `pragma`
 
 Identifier or member expression to call when the effective runtime is classic
 (`string`, default: `'React.createElement'`).
 
 Comment form: `@jsx identifier`.
 
-###### `options.pragmaFrag`
+###### `pragmaFrag`
 
 Identifier or member expression to use as a symbol for fragments when the
 effective runtime is classic (`string`, default: `'React.Fragment'`).
 
 Comment form: `@jsxFrag identifier`.
 
-###### `options.development`
+###### `development`
 
 When in the automatic runtime, whether to import `theSource/jsx-dev-runtime.js`,
 use `jsxDEV`, and pass location info when available (`boolean`, default: `false`).
 
 This helps debugging but adds a lot of code that you don’t want in production.
 
-###### `options.filePath`
+###### `filePath`
 
 File path to the original source file (`string`, example: `'path/to/file.js'`).
 Passed in location info to `jsxDEV` when using the automatic runtime with
