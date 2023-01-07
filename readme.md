@@ -234,7 +234,7 @@ Some differences:
 ## Types
 
 This package is fully typed with [TypeScript][].
-It exports the additional type `Options`.
+It exports the additional type `Options` and `Runtime`.
 
 ## Compatibility
 
