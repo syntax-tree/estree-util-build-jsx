@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
-// @ts-expect-error: typed incorrectly.
 import {walk} from 'estree-walker'
 // @ts-expect-error: typed incorrectly.
 import {generate} from 'astring'
@@ -1563,6 +1562,7 @@ function parse(doc, clean, addComments) {
 
   if (addComments !== false) tree.comments = comments
 
+  // @ts-expect-error: hush, `estree-walker` is broken.
   if (clean !== false) walk(tree, {leave})
 
   return JSON.parse(JSON.stringify(tree))
