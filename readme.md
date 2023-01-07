@@ -18,9 +18,10 @@
 *   [Use](#use)
 *   [API](#api)
     *   [`buildJsx(tree, options?)`](#buildjsxtree-options)
+    *   [`Options`](#options)
+    *   [`Runtime`](#runtime)
 *   [Examples](#examples)
     *   [Example: use with Acorn](#example-use-with-acorn)
-*   [Algorithm](#algorithm)
 *   [Types](#types)
 *   [Compatibility](#compatibility)
 *   [Related](#related)
@@ -37,12 +38,12 @@ function calls.
 ## When should I use this?
 
 If you already have a tree and only need to compile JSX away, use this.
-If you have code, using something like [SWC][] or [esbuild][] instead.
+If you have code, use something like [SWC][] or [esbuild][] instead.
 
 ## Install
 
 This package is [ESM only][esm].
-In Node.js (version 14.14+, 16.0+), install with [npm][]:
+In Node.js (version 14.14+ and 16.0+), install with [npm][]:
 
 ```sh
 npm install estree-util-build-jsx
@@ -90,27 +91,24 @@ console.log(
 
 ```js
 import fs from 'node:fs/promises'
-import {Parser} from 'acorn'
-import jsx from 'acorn-jsx'
-import {generate} from 'astring'
+import {fromJs} from 'esast-util-from-js'
 import {buildJsx} from 'estree-util-build-jsx'
+import {toJs} from 'estree-util-to-js'
+import jsx from 'acorn-jsx'
 
 const doc = String(await fs.readFile('example.jsx'))
 
-const tree = Parser.extend(jsx()).parse(doc, {
-  sourceType: 'module',
-  ecmaVersion: 2022
-})
+const tree = fromJs(doc, {module: true, plugins: [jsx()]})
 
 buildJsx(tree, {pragma: 'x', pragmaFrag: 'null'})
 
-console.log(generate(tree))
+console.log(toJs(tree).value)
 ```
 
 …now running `node example.js` yields:
 
 ```js
-import x from 'xastscript';
+import x from "xastscript";
 console.log(x("album", {
   id: 123
 }, x("name", null, "Born in the U.S.A."), x("artist", null, "Bruce Springsteen"), x("releasedate", {
@@ -125,31 +123,53 @@ console.log(x(null, null, 1 + 1, x("self-closing"), x("x", Object.assign({
 
 ## API
 
-This package exports the identifier `buildJsx`.
+This package exports the identifier [`buildJsx`][build-jsx].
 There is no default export.
 
 ### `buildJsx(tree, options?)`
 
-Turn JSX in `tree` ([`Program`][program]) into function calls:
-`<x />` -> `h('x')`!
+Turn JSX in `tree` into function calls: `<x />` -> `h('x')`!
 
-##### `options`
+###### Algorithm
 
-Configuration (optional).
+In almost all cases, this utility is the same as the Babel plugin, except that
+they work on slightly different syntax trees.
+
+Some differences:
+
+*   no pure annotations things
+*   `this` is not a component: `<this>` -> `h('this')`, not `h(this)`
+*   namespaces are supported: `<a:b c:d>` -> `h('a:b', {'c:d': true})`,
+    which throws by default in Babel or can be turned on with `throwIfNamespace`
+*   no `useSpread`, `useBuiltIns`, or `filter` options
+
+###### Parameters
+
+*   `tree` ([`Node`][node])
+    — tree to transform (typically [`Program`][program])
+*   `options` ([`Options`][options], optional)
+    — configuration
+
+###### Returns
+
+Given, modified, `tree` ([`Node`][node]).
+
+### `Options`
+
+Configuration (TypeScript type).
 
 > 👉 **Note**: you can also configure `runtime`, `importSource`, `pragma`, and
 > `pragmaFrag` from within files through comments.
 
 ###### `options.runtime`
 
-Choose the [runtime][]
-(`string`, `'automatic'` or `'classic'`, default: `'classic'`).
+Choose the [runtime][jsx-runtime] ([`Runtime`][runtime], default: `'classic'`).
 
 Comment form: `@jsxRuntime theRuntime`.
 
 ###### `options.importSource`
 
-Place to import `jsx`, `jsxs`, `jsxDEV`, and/or `Fragment` from, when the
+Place to import `jsx`, `jsxs`, `jsxDEV`, and `Fragment` from, when the
 effective runtime is automatic (`string`, default: `'react'`).
 
 Comment form: `@jsxImportSource theSource`.
@@ -184,20 +204,26 @@ Comment form: `@jsxFrag identifier`.
 
 ###### `options.development`
 
-Import `jsxDEV` from `theSource/jsx-dev-runtime.js` and add location info on
-where a component originated from (`boolean`, default: `false`).
+When in the automatic runtime, whether to import `theSource/jsx-dev-runtime.js`,
+use `jsxDEV`, and pass location info when available (`boolean`, default: `false`).
+
 This helps debugging but adds a lot of code that you don’t want in production.
-Only used in the automatic runtime.
 
 ###### `options.filePath`
 
 File path to the original source file (`string`, example: `'path/to/file.js'`).
-Used in the location info when using the automatic runtime with
+Passed in location info to `jsxDEV` when using the automatic runtime with
 `development: true`.
 
-##### Returns
+### `Runtime`
 
-The given `tree` (`Node`).
+How to transform JSX (TypeScript type).
+
+###### Type
+
+```ts
+type Runtime = 'automatic' | 'classic'
+```
 
 ## Examples
 
@@ -217,19 +243,6 @@ const comments = []
 const tree = Parser.extend(jsx()).parse(doc, {onComment: comments})
 tree.comments = comments
 ```
-
-## Algorithm
-
-In almost all cases, this utility is the same as the Babel plugin, except that
-they work on slightly different syntax trees.
-
-Some differences:
-
-*   no pure annotations things
-*   `this` is not a component: `<this>` -> `h('this')`, not `h(this)`
-*   namespaces are supported: `<a:b c:d>` -> `h('a:b', {'c:d': true})`,
-    which throws by default in Babel or can be turned on with `throwIfNamespace`
-*   no `useSpread`, `useBuiltIns`, or `filter` options
 
 ## Types
 
@@ -321,10 +334,18 @@ abide by its terms.
 
 [espree]: https://github.com/eslint/espree
 
+[node]: https://github.com/estree/estree/blob/master/es5.md#node-objects
+
 [program]: https://github.com/estree/estree/blob/master/es5.md#programs
 
-[runtime]: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
+[jsx-runtime]: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html
 
 [swc]: https://swc.rs
 
 [esbuild]: https://esbuild.github.io
+
+[build-jsx]: #buildjsxtree-options
+
+[options]: #options
+
+[runtime]: #runtime
