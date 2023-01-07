@@ -8,10 +8,17 @@ import {generate} from 'astring'
 import recast from 'recast'
 import escodegen from 'escodegen'
 import {buildJsx} from './index.js'
+import * as mod from './index.js'
 
 const parser = Parser.extend(jsx())
 
-test('estree-util-build-jsx', () => {
+test('buildJsx', () => {
+  assert.deepEqual(
+    Object.keys(mod).sort(),
+    ['buildJsx'],
+    'should expose the public api'
+  )
+
   assert.deepEqual(
     expression(buildJsx(parse('<><x /></>'))),
     {
