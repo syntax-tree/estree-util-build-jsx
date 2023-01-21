@@ -249,7 +249,7 @@ tree.comments = comments
 ## Types
 
 This package is fully typed with [TypeScript][].
-It exports the additional type `Options` and `Runtime`.
+It exports the additional type [`Options`][options] and [`Runtime`][runtime].
 
 ## Compatibility
 
