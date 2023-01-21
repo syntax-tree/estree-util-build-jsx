@@ -19,7 +19,7 @@
 *   [API](#api)
     *   [`buildJsx(tree, options?)`](#buildjsxtree-options)
     *   [`Options`](#options)
-    *   [`Runtime`](#runtime)
+    *   [`Runtime`](#runtime-1)
 *   [Examples](#examples)
     *   [Example: use with Acorn](#example-use-with-acorn)
 *   [Types](#types)
@@ -350,4 +350,4 @@ abide by its terms.
 
 [options]: #options
 
-[runtime]: #runtime
+[runtime]: #runtime-1

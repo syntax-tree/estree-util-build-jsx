@@ -1569,7 +1569,6 @@ function parse(doc, clean, addComments) {
 
   if (addComments !== false) tree.comments = comments
 
-  // @ts-expect-error: hush, `estree-walker` is broken.
   if (clean !== false) walk(tree, {leave})
 
   return JSON.parse(JSON.stringify(tree))
