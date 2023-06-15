@@ -3,7 +3,6 @@ import test from 'node:test'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 import {walk} from 'estree-walker'
-// @ts-expect-error: typed incorrectly.
 import {generate} from 'astring'
 import recast from 'recast'
 import escodegen from 'escodegen'
