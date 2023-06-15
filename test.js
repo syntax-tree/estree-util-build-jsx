@@ -546,7 +546,12 @@ test('should support a single spread prop', () => {
     callee: {type: 'Identifier', name: 'h'},
     arguments: [
       {type: 'Literal', value: 'a'},
-      {type: 'Identifier', name: 'b'}
+      {
+        type: 'ObjectExpression',
+        properties: [
+          {type: 'SpreadElement', argument: {type: 'Identifier', name: 'b'}}
+        ]
+      }
     ],
     optional: false
   })
@@ -561,33 +566,22 @@ test('should support a spread prop and another prop', () => {
       arguments: [
         {type: 'Literal', value: 'a'},
         {
-          type: 'CallExpression',
-          callee: {
-            type: 'MemberExpression',
-            object: {type: 'Identifier', name: 'Object'},
-            property: {type: 'Identifier', name: 'assign'},
-            computed: false,
-            optional: false
-          },
-          arguments: [
-            {type: 'ObjectExpression', properties: []},
-            {type: 'Identifier', name: 'b'},
+          type: 'ObjectExpression',
+          properties: [
             {
-              type: 'ObjectExpression',
-              properties: [
-                {
-                  type: 'Property',
-                  key: {type: 'Identifier', name: 'c'},
-                  value: {type: 'Literal', value: true},
-                  kind: 'init',
-                  method: false,
-                  shorthand: false,
-                  computed: false
-                }
-              ]
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'b'}
+            },
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'c'},
+              value: {type: 'Literal', value: true},
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
             }
-          ],
-          optional: false
+          ]
         }
       ],
       optional: false
@@ -604,32 +598,19 @@ test('should support a prop and a spread prop', () => {
       arguments: [
         {type: 'Literal', value: 'a'},
         {
-          type: 'CallExpression',
-          callee: {
-            type: 'MemberExpression',
-            object: {type: 'Identifier', name: 'Object'},
-            property: {type: 'Identifier', name: 'assign'},
-            computed: false,
-            optional: false
-          },
-          arguments: [
+          type: 'ObjectExpression',
+          properties: [
             {
-              type: 'ObjectExpression',
-              properties: [
-                {
-                  type: 'Property',
-                  key: {type: 'Identifier', name: 'b'},
-                  value: {type: 'Literal', value: true},
-                  kind: 'init',
-                  method: false,
-                  shorthand: false,
-                  computed: false
-                }
-              ]
+              type: 'Property',
+              key: {type: 'Identifier', name: 'b'},
+              value: {type: 'Literal', value: true},
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
             },
-            {type: 'Identifier', name: 'c'}
-          ],
-          optional: false
+            {type: 'SpreadElement', argument: {type: 'Identifier', name: 'c'}}
+          ]
         }
       ],
       optional: false
@@ -646,20 +627,17 @@ test('should support two spread props', () => {
       arguments: [
         {type: 'Literal', value: 'a'},
         {
-          type: 'CallExpression',
-          callee: {
-            type: 'MemberExpression',
-            object: {type: 'Identifier', name: 'Object'},
-            property: {type: 'Identifier', name: 'assign'},
-            computed: false,
-            optional: false
-          },
-          arguments: [
-            {type: 'ObjectExpression', properties: []},
-            {type: 'Identifier', name: 'b'},
-            {type: 'Identifier', name: 'c'}
-          ],
-          optional: false
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'b'}
+            },
+            {
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'c'}
+            }
+          ]
         }
       ],
       optional: false
@@ -861,7 +839,7 @@ test('should integrate w/ generators (`astring`)', () => {
         pragmaFrag: 'f'
       })
     ),
-    'h(f, null, h("a", Object.assign({\n  b: true,\n  c: "d",\n  e: f\n}, g), "h"));\n'
+    'h(f, null, h("a", {\n  b: true,\n  c: "d",\n  e: f,\n  ...g\n}, "h"));\n'
   )
 })
 
@@ -873,7 +851,7 @@ test('should integrate w/ generators (`recast`)', () => {
         pragmaFrag: 'f'
       })
     ).code,
-    'h(f, null, h("a", Object.assign({\n    b: true,\n    c: "d",\n    e: f\n}, g), "h"));'
+    'h(f, null, h("a", {\n    b: true,\n    c: "d",\n    e: f,\n    ...g\n}, "h"));'
   )
 })
 
@@ -885,7 +863,7 @@ test('should integrate w/ generators (`escodegen`)', () => {
         pragmaFrag: 'f'
       })
     ),
-    "h(f, null, h('a', Object.assign({\n    b: true,\n    c: 'd',\n    e: f\n}, g), 'h'));"
+    "h(f, null, h('a', {\n    b: true,\n    c: 'd',\n    e: f,\n    ...g\n}, 'h'));"
   )
 })
 
@@ -945,131 +923,121 @@ test('should support positional info', () => {
                     range: [6, 7]
                   },
                   {
-                    type: 'CallExpression',
-                    callee: {
-                      type: 'MemberExpression',
-                      object: {type: 'Identifier', name: 'Object'},
-                      property: {type: 'Identifier', name: 'assign'},
-                      computed: false,
-                      optional: false
-                    },
-                    arguments: [
+                    type: 'ObjectExpression',
+                    properties: [
                       {
-                        type: 'ObjectExpression',
-                        properties: [
-                          {
-                            type: 'Property',
-                            key: {
-                              type: 'Identifier',
-                              name: 'b',
-                              start: 8,
-                              end: 9,
-                              loc: {
-                                start: {line: 2, column: 5},
-                                end: {line: 2, column: 6}
-                              },
-                              range: [8, 9]
-                            },
-                            value: {type: 'Literal', value: true},
-                            kind: 'init',
-                            method: false,
-                            shorthand: false,
-                            computed: false,
-                            start: 8,
-                            end: 9,
-                            loc: {
-                              start: {line: 2, column: 5},
-                              end: {line: 2, column: 6}
-                            },
-                            range: [8, 9]
+                        type: 'Property',
+                        key: {
+                          type: 'Identifier',
+                          name: 'b',
+                          start: 8,
+                          end: 9,
+                          loc: {
+                            start: {line: 2, column: 5},
+                            end: {line: 2, column: 6}
                           },
-                          {
-                            type: 'Property',
-                            key: {
-                              type: 'Identifier',
-                              name: 'c',
-                              start: 10,
-                              end: 11,
-                              loc: {
-                                start: {line: 2, column: 7},
-                                end: {line: 2, column: 8}
-                              },
-                              range: [10, 11]
-                            },
-                            value: {
-                              type: 'Literal',
-                              start: 12,
-                              end: 15,
-                              loc: {
-                                start: {line: 2, column: 9},
-                                end: {line: 2, column: 12}
-                              },
-                              range: [12, 15],
-                              value: 'd'
-                            },
-                            kind: 'init',
-                            method: false,
-                            shorthand: false,
-                            computed: false,
-                            start: 10,
-                            end: 15,
-                            loc: {
-                              start: {line: 2, column: 7},
-                              end: {line: 2, column: 12}
-                            },
-                            range: [10, 15]
-                          },
-                          {
-                            type: 'Property',
-                            key: {
-                              type: 'Identifier',
-                              name: 'e',
-                              start: 16,
-                              end: 17,
-                              loc: {
-                                start: {line: 2, column: 13},
-                                end: {line: 2, column: 14}
-                              },
-                              range: [16, 17]
-                            },
-                            value: {
-                              type: 'Identifier',
-                              start: 19,
-                              end: 20,
-                              loc: {
-                                start: {line: 2, column: 16},
-                                end: {line: 2, column: 17}
-                              },
-                              range: [19, 20],
-                              name: 'f'
-                            },
-                            kind: 'init',
-                            method: false,
-                            shorthand: false,
-                            computed: false,
-                            start: 16,
-                            end: 21,
-                            loc: {
-                              start: {line: 2, column: 13},
-                              end: {line: 2, column: 18}
-                            },
-                            range: [16, 21]
-                          }
-                        ]
+                          range: [8, 9]
+                        },
+                        value: {type: 'Literal', value: true},
+                        kind: 'init',
+                        method: false,
+                        shorthand: false,
+                        computed: false,
+                        start: 8,
+                        end: 9,
+                        loc: {
+                          start: {line: 2, column: 5},
+                          end: {line: 2, column: 6}
+                        },
+                        range: [8, 9]
                       },
                       {
-                        type: 'Identifier',
-                        start: 26,
-                        end: 27,
-                        loc: {
-                          start: {line: 2, column: 23},
-                          end: {line: 2, column: 24}
+                        type: 'Property',
+                        key: {
+                          type: 'Identifier',
+                          name: 'c',
+                          start: 10,
+                          end: 11,
+                          loc: {
+                            start: {line: 2, column: 7},
+                            end: {line: 2, column: 8}
+                          },
+                          range: [10, 11]
                         },
-                        range: [26, 27],
-                        name: 'g'
+                        value: {
+                          type: 'Literal',
+                          start: 12,
+                          end: 15,
+                          loc: {
+                            start: {line: 2, column: 9},
+                            end: {line: 2, column: 12}
+                          },
+                          range: [12, 15],
+                          value: 'd'
+                        },
+                        kind: 'init',
+                        method: false,
+                        shorthand: false,
+                        computed: false,
+                        start: 10,
+                        end: 15,
+                        loc: {
+                          start: {line: 2, column: 7},
+                          end: {line: 2, column: 12}
+                        },
+                        range: [10, 15]
+                      },
+                      {
+                        type: 'Property',
+                        key: {
+                          type: 'Identifier',
+                          name: 'e',
+                          start: 16,
+                          end: 17,
+                          loc: {
+                            start: {line: 2, column: 13},
+                            end: {line: 2, column: 14}
+                          },
+                          range: [16, 17]
+                        },
+                        value: {
+                          type: 'Identifier',
+                          start: 19,
+                          end: 20,
+                          loc: {
+                            start: {line: 2, column: 16},
+                            end: {line: 2, column: 17}
+                          },
+                          range: [19, 20],
+                          name: 'f'
+                        },
+                        kind: 'init',
+                        method: false,
+                        shorthand: false,
+                        computed: false,
+                        start: 16,
+                        end: 21,
+                        loc: {
+                          start: {line: 2, column: 13},
+                          end: {line: 2, column: 18}
+                        },
+                        range: [16, 21]
+                      },
+                      {
+                        type: 'SpreadElement',
+                        argument: {
+                          type: 'Identifier',
+                          start: 26,
+                          end: 27,
+                          loc: {
+                            start: {line: 2, column: 23},
+                            end: {line: 2, column: 24}
+                          },
+                          range: [26, 27],
+                          name: 'g'
+                        }
                       }
-                    ],
-                    optional: false
+                    ]
                   },
                   {
                     type: 'Literal',
@@ -1183,11 +1151,11 @@ test('should support the automatic runtime (props, spread, children)', () => {
     generate(buildJsx(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
-      '_jsx("a", Object.assign({',
-      '  b: "1"',
-      '}, c, {',
+      '_jsx("a", {',
+      '  b: "1",',
+      '  ...c,',
       '  children: "d"',
-      '}));',
+      '});',
       ''
     ].join('\n')
   )
@@ -1202,13 +1170,12 @@ test('should support the automatic runtime (spread, props, children)', () => {
     ),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
-      '_jsx("a", Object.assign({',
+      '_jsx("a", {',
       '  b: 1,',
-      '  c: 2',
-      '}, {',
+      '  c: 2,',
       '  d: "e",',
       '  children: "f"',
-      '}));',
+      '});',
       ''
     ].join('\n')
   )
@@ -1306,11 +1273,11 @@ test('should support the automatic runtime (props, spread, children, development
     ),
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
-      '_jsxDEV("a", Object.assign({',
-      '  b: "1"',
-      '}, c, {',
+      '_jsxDEV("a", {',
+      '  b: "1",',
+      '  ...c,',
       '  children: "d"',
-      '}), undefined, false, {',
+      '}, undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
@@ -1331,13 +1298,12 @@ test('should support the automatic runtime (spread, props, children, development
     ),
     [
       'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
-      '_jsxDEV("a", Object.assign({',
+      '_jsxDEV("a", {',
       '  b: 1,',
-      '  c: 2',
-      '}, {',
+      '  c: 2,',
       '  d: "e",',
       '  children: "f"',
-      '}), undefined, false, {',
+      '}, undefined, false, {',
       '  fileName: "index.js",',
       '  lineNumber: 1,',
       '  columnNumber: 1',
