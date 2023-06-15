@@ -11,51 +11,47 @@ import * as mod from './index.js'
 
 const parser = Parser.extend(jsx())
 
-test('buildJsx', () => {
-  assert.deepEqual(
-    Object.keys(mod).sort(),
-    ['buildJsx'],
-    'should expose the public api'
-  )
+test('should expose the public api', () => {
+  assert.deepEqual(Object.keys(mod).sort(), ['buildJsx'])
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<><x /></>'))),
-    {
-      type: 'CallExpression',
-      callee: {
+test('should default to `React.createElement` / `React.Fragment`', () => {
+  assert.deepEqual(expression(buildJsx(parse('<><x /></>'))), {
+    type: 'CallExpression',
+    callee: {
+      type: 'MemberExpression',
+      object: {type: 'Identifier', name: 'React'},
+      property: {type: 'Identifier', name: 'createElement'},
+      computed: false,
+      optional: false
+    },
+    arguments: [
+      {
         type: 'MemberExpression',
         object: {type: 'Identifier', name: 'React'},
-        property: {type: 'Identifier', name: 'createElement'},
+        property: {type: 'Identifier', name: 'Fragment'},
         computed: false,
         optional: false
       },
-      arguments: [
-        {
+      {type: 'Literal', value: null},
+      {
+        type: 'CallExpression',
+        callee: {
           type: 'MemberExpression',
           object: {type: 'Identifier', name: 'React'},
-          property: {type: 'Identifier', name: 'Fragment'},
+          property: {type: 'Identifier', name: 'createElement'},
           computed: false,
           optional: false
         },
-        {type: 'Literal', value: null},
-        {
-          type: 'CallExpression',
-          callee: {
-            type: 'MemberExpression',
-            object: {type: 'Identifier', name: 'React'},
-            property: {type: 'Identifier', name: 'createElement'},
-            computed: false,
-            optional: false
-          },
-          arguments: [{type: 'Literal', value: 'x'}],
-          optional: false
-        }
-      ],
-      optional: false
-    },
-    'should default to `React.createElement` / `React.Fragment`'
-  )
+        arguments: [{type: 'Literal', value: 'x'}],
+        optional: false
+      }
+    ],
+    optional: false
+  })
+})
 
+test('should support `pragma`, `pragmaFrag`', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<><x /></>'), {pragma: 'a', pragmaFrag: 'b'})),
     {
@@ -72,33 +68,33 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support `pragma`, `pragmaFrag`'
+    }
   )
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
-    {
-      type: 'CallExpression',
-      callee: {
-        type: 'MemberExpression',
-        object: {type: 'Identifier', name: 'a'},
-        property: {type: 'Literal', value: 'b-c'},
-        computed: true,
-        optional: false
-      },
-      arguments: [{type: 'Literal', value: 'x'}],
+test('should support `pragma` w/ non-identifiers (1)', () => {
+  assert.deepEqual(expression(buildJsx(parse('<x />'), {pragma: 'a.b-c'})), {
+    type: 'CallExpression',
+    callee: {
+      type: 'MemberExpression',
+      object: {type: 'Identifier', name: 'a'},
+      property: {type: 'Literal', value: 'b-c'},
+      computed: true,
       optional: false
     },
-    'should support `pragma` w/ non-identifiers (1)'
-  )
+    arguments: [{type: 'Literal', value: 'x'}],
+    optional: false
+  })
+})
 
+test('should support `pragma` w/ non-identifiers (2)', () => {
   assert.equal(
     generate(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
-    'a["b-c"]("x");\n',
-    'should support `pragma` w/ non-identifiers (2)'
+    'a["b-c"]("x");\n'
   )
+})
 
+test('should support `@jsx`, `@jsxFrag` comments', () => {
   assert.deepEqual(
     expression(buildJsx(parse('/* @jsx a @jsxFrag b */\n<><x /></>'))),
     {
@@ -115,401 +111,364 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support `@jsx`, `@jsxFrag` comments'
+    }
   )
+})
 
-  assert.throws(
-    () => {
-      buildJsx(parse('/* @jsx a @jsxRuntime automatic */'))
+test('should throw when `@jsx` is set in the automatic runtime', () => {
+  assert.throws(() => {
+    buildJsx(parse('/* @jsx a @jsxRuntime automatic */'))
+  }, /Unexpected `@jsx` pragma w\/ automatic runtime/)
+})
+
+test('should throw when `@jsxFrag` is set in the automatic runtime', () => {
+  assert.throws(() => {
+    buildJsx(parse('/* @jsxFrag a @jsxRuntime automatic */'))
+  }, /Unexpected `@jsxFrag` pragma w\/ automatic runtime/)
+})
+
+test('should throw when `@jsxImportSource` is set in the classic runtime', () => {
+  assert.throws(() => {
+    buildJsx(parse('/* @jsxImportSource a @jsxRuntime classic */'))
+  }, /Unexpected `@jsxImportSource` w\/ classic runtime/)
+})
+
+test('should throw on a non-automatic nor classic `@jsxRuntime`', () => {
+  assert.throws(() => {
+    buildJsx(parse('/* @jsxRuntime a */'))
+  }, /Unexpected `jsxRuntime` `a`, expected `automatic` or `classic`/)
+})
+
+test('should ignore other comments', () => {
+  assert.deepEqual(expression(buildJsx(parse('// a\n<><x /></>'))), {
+    type: 'CallExpression',
+    callee: {
+      type: 'MemberExpression',
+      object: {type: 'Identifier', name: 'React'},
+      property: {type: 'Identifier', name: 'createElement'},
+      computed: false,
+      optional: false
     },
-    /Unexpected `@jsx` pragma w\/ automatic runtime/,
-    'should throw when `@jsx` is set in the automatic runtime'
-  )
-
-  assert.throws(
-    () => {
-      buildJsx(parse('/* @jsxFrag a @jsxRuntime automatic */'))
-    },
-    /Unexpected `@jsxFrag` pragma w\/ automatic runtime/,
-    'should throw when `@jsxFrag` is set in the automatic runtime'
-  )
-
-  assert.throws(
-    () => {
-      buildJsx(parse('/* @jsxImportSource a @jsxRuntime classic */'))
-    },
-    /Unexpected `@jsxImportSource` w\/ classic runtime/,
-    'should throw when `@jsxImportSource` is set in the classic runtime'
-  )
-
-  assert.throws(
-    () => {
-      buildJsx(parse('/* @jsxRuntime a */'))
-    },
-    /Unexpected `jsxRuntime` `a`, expected `automatic` or `classic`/,
-    'should throw on a non-automatic nor classic `@jsxRuntime`'
-  )
-
-  assert.deepEqual(
-    expression(buildJsx(parse('// a\n<><x /></>'))),
-    {
-      type: 'CallExpression',
-      callee: {
+    arguments: [
+      {
         type: 'MemberExpression',
         object: {type: 'Identifier', name: 'React'},
-        property: {type: 'Identifier', name: 'createElement'},
+        property: {type: 'Identifier', name: 'Fragment'},
         computed: false,
         optional: false
       },
-      arguments: [
-        {
+      {type: 'Literal', value: null},
+      {
+        type: 'CallExpression',
+        callee: {
           type: 'MemberExpression',
           object: {type: 'Identifier', name: 'React'},
-          property: {type: 'Identifier', name: 'Fragment'},
+          property: {type: 'Identifier', name: 'createElement'},
           computed: false,
           optional: false
         },
-        {type: 'Literal', value: null},
-        {
-          type: 'CallExpression',
-          callee: {
-            type: 'MemberExpression',
-            object: {type: 'Identifier', name: 'React'},
-            property: {type: 'Identifier', name: 'createElement'},
-            computed: false,
-            optional: false
-          },
-          arguments: [{type: 'Literal', value: 'x'}],
-          optional: false
-        }
-      ],
-      optional: false
-    },
-    'should ignore other comments'
-  )
+        arguments: [{type: 'Literal', value: 'x'}],
+        optional: false
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [{type: 'Literal', value: 'a'}],
-      optional: false
-    },
-    'should support a self-closing element'
-  )
+test('should support a self-closing element', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [{type: 'Literal', value: 'a'}],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a>b</a>'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {type: 'Literal', value: null},
-        {type: 'Literal', value: 'b'}
-      ],
-      optional: false
-    },
-    'should support a closed element'
-  )
+test('should support a closed element', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a>b</a>'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {type: 'Literal', value: null},
+      {type: 'Literal', value: 'b'}
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a.b />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {
-          type: 'MemberExpression',
-          object: {type: 'Identifier', name: 'a'},
-          property: {type: 'Identifier', name: 'b'},
-          computed: false,
-          optional: false
-        }
-      ],
-      optional: false
-    },
-    'should support dots in a tag name for member expressions'
-  )
+test('should support dots in a tag name for member expressions', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a.b />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {
+        type: 'MemberExpression',
+        object: {type: 'Identifier', name: 'a'},
+        property: {type: 'Identifier', name: 'b'},
+        computed: false,
+        optional: false
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {
-          type: 'MemberExpression',
-          object: {type: 'Identifier', name: 'a'},
-          property: {type: 'Literal', value: 'b-c'},
-          computed: true,
-          optional: false
-        }
-      ],
-      optional: false
-    },
-    'should support dots *and* dashes in tag names (1)'
-  )
+test('should support dots *and* dashes in tag names (1)', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a.b-c />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {
+        type: 'MemberExpression',
+        object: {type: 'Identifier', name: 'a'},
+        property: {type: 'Literal', value: 'b-c'},
+        computed: true,
+        optional: false
+      }
+    ],
+    optional: false
+  })
+})
 
+test('should support dots *and* dashes in tag names (2)', () => {
   assert.equal(
     generate(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
-    'h(a["b-c"]);\n',
-    'should support dots *and* dashes in tag names (2)'
+    'h(a["b-c"]);\n'
   )
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {
-          type: 'MemberExpression',
-          object: {type: 'Literal', value: 'a-b'},
-          property: {type: 'Identifier', name: 'c'},
-          computed: false,
-          optional: false
-        }
-      ],
-      optional: false
-    },
-    'should support dots *and* dashes in tag names (3)'
-  )
+test('should support dots *and* dashes in tag names (3)', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a-b.c />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {
+        type: 'MemberExpression',
+        object: {type: 'Literal', value: 'a-b'},
+        property: {type: 'Identifier', name: 'c'},
+        computed: false,
+        optional: false
+      }
+    ],
+    optional: false
+  })
+})
 
+test('should support dots *and* dashes in tag names (4)', () => {
   assert.equal(
     generate(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
-    'h(("a-b").c);\n',
-    'should support dots *and* dashes in tag names (4)'
+    'h(("a-b").c);\n'
   )
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a.b.c.d />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {
+test('should support dots in a tag name for member expressions (2)', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a.b.c.d />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {
+        type: 'MemberExpression',
+        object: {
           type: 'MemberExpression',
           object: {
             type: 'MemberExpression',
-            object: {
-              type: 'MemberExpression',
-              object: {type: 'Identifier', name: 'a'},
-              property: {type: 'Identifier', name: 'b'},
-              computed: false,
-              optional: false
-            },
-            property: {type: 'Identifier', name: 'c'},
+            object: {type: 'Identifier', name: 'a'},
+            property: {type: 'Identifier', name: 'b'},
             computed: false,
             optional: false
           },
-          property: {type: 'Identifier', name: 'd'},
+          property: {type: 'Identifier', name: 'c'},
           computed: false,
           optional: false
-        }
-      ],
-      optional: false
-    },
-    'should support dots in a tag name for member expressions (2)'
-  )
+        },
+        property: {type: 'Identifier', name: 'd'},
+        computed: false,
+        optional: false
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a:b />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [{type: 'Literal', value: 'a:b'}],
-      optional: false
-    },
-    'should support colons in a tag name for namespaces'
-  )
+test('should support colons in a tag name for namespaces', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a:b />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [{type: 'Literal', value: 'a:b'}],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a-b />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [{type: 'Literal', value: 'a-b'}],
-      optional: false
-    },
-    'should support dashes in tag names'
-  )
+test('should support dashes in tag names', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a-b />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [{type: 'Literal', value: 'a-b'}],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<A />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [{type: 'Identifier', name: 'A'}],
-      optional: false
-    },
-    'should non-lowercase for components in tag names'
-  )
+test('should non-lowercase for components in tag names', () => {
+  assert.deepEqual(expression(buildJsx(parse('<A />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [{type: 'Identifier', name: 'A'}],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a b />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {
-          type: 'ObjectExpression',
-          properties: [
-            {
-              type: 'Property',
-              key: {type: 'Identifier', name: 'b'},
-              value: {type: 'Literal', value: true},
-              kind: 'init',
-              method: false,
-              shorthand: false,
-              computed: false
-            }
-          ]
-        }
-      ],
-      optional: false
-    },
-    'should support a boolean prop'
-  )
+test('should support a boolean prop', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a b />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {
+        type: 'ObjectExpression',
+        properties: [
+          {
+            type: 'Property',
+            key: {type: 'Identifier', name: 'b'},
+            value: {type: 'Literal', value: true},
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false
+          }
+        ]
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a b:c />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {
-          type: 'ObjectExpression',
-          properties: [
-            {
-              type: 'Property',
-              key: {type: 'Literal', value: 'b:c'},
-              value: {type: 'Literal', value: true},
-              kind: 'init',
-              method: false,
-              shorthand: false,
-              computed: false
-            }
-          ]
-        }
-      ],
-      optional: false
-    },
-    'should support colons in prop names'
-  )
+test('should support colons in prop names', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a b:c />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {
+        type: 'ObjectExpression',
+        properties: [
+          {
+            type: 'Property',
+            key: {type: 'Literal', value: 'b:c'},
+            value: {type: 'Literal', value: true},
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false
+          }
+        ]
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a b-c />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {
-          type: 'ObjectExpression',
-          properties: [
-            {
-              type: 'Property',
-              key: {type: 'Literal', value: 'b-c'},
-              value: {type: 'Literal', value: true},
-              kind: 'init',
-              method: false,
-              shorthand: false,
-              computed: false
-            }
-          ]
-        }
-      ],
-      optional: false
-    },
-    'should support a prop name that can’t be an identifier'
-  )
+test('should support a prop name that can’t be an identifier', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a b-c />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {
+        type: 'ObjectExpression',
+        properties: [
+          {
+            type: 'Property',
+            key: {type: 'Literal', value: 'b-c'},
+            value: {type: 'Literal', value: true},
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false
+          }
+        ]
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a b="c" />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {
-          type: 'ObjectExpression',
-          properties: [
-            {
-              type: 'Property',
-              key: {type: 'Identifier', name: 'b'},
-              value: {type: 'Literal', value: 'c'},
-              kind: 'init',
-              method: false,
-              shorthand: false,
-              computed: false
-            }
-          ]
-        }
-      ],
-      optional: false
-    },
-    'should support a prop value'
-  )
+test('should support a prop value', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a b="c" />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {
+        type: 'ObjectExpression',
+        properties: [
+          {
+            type: 'Property',
+            key: {type: 'Identifier', name: 'b'},
+            value: {type: 'Literal', value: 'c'},
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false
+          }
+        ]
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a b={c} />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {
-          type: 'ObjectExpression',
-          properties: [
-            {
-              type: 'Property',
-              key: {type: 'Identifier', name: 'b'},
-              value: {type: 'Identifier', name: 'c'},
-              kind: 'init',
-              method: false,
-              shorthand: false,
-              computed: false
-            }
-          ]
-        }
-      ],
-      optional: false
-    },
-    'should support an expression as a prop value'
-  )
+test('should support an expression as a prop value', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a b={c} />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {
+        type: 'ObjectExpression',
+        properties: [
+          {
+            type: 'Property',
+            key: {type: 'Identifier', name: 'b'},
+            value: {type: 'Identifier', name: 'c'},
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false
+          }
+        ]
+      }
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a b={1} />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {
-          type: 'ObjectExpression',
-          properties: [
-            {
-              type: 'Property',
-              key: {type: 'Identifier', name: 'b'},
-              value: {type: 'Literal', value: 1},
-              kind: 'init',
-              method: false,
-              shorthand: false,
-              computed: false
-            }
-          ]
-        }
-      ],
-      optional: false
-    },
-    'should support an expression as a prop value (2)'
-  )
+test('should support an expression as a prop value (2)', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a b={1} />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {
+        type: 'ObjectExpression',
+        properties: [
+          {
+            type: 'Property',
+            key: {type: 'Identifier', name: 'b'},
+            value: {type: 'Literal', value: 1},
+            kind: 'init',
+            method: false,
+            shorthand: false,
+            computed: false
+          }
+        ]
+      }
+    ],
+    optional: false
+  })
+})
 
+test('should support a fragment as a prop value', () => {
   assert.deepEqual(
     expression(
       buildJsx(parse('<a b=<>c</> />'), {pragma: 'h', pragmaFrag: 'f'})
@@ -544,10 +503,11 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support a fragment as a prop value'
+    }
   )
+})
 
+test('should support an element as a prop value', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a b=<c /> />'), {pragma: 'h'})),
     {
@@ -576,24 +536,23 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support an element as a prop value'
+    }
   )
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a {...b} />'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {type: 'Identifier', name: 'b'}
-      ],
-      optional: false
-    },
-    'should support a single spread prop'
-  )
+test('should support a single spread prop', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a {...b} />'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {type: 'Identifier', name: 'b'}
+    ],
+    optional: false
+  })
+})
 
+test('should support a spread prop and another prop', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a {...b} c />'), {pragma: 'h'})),
     {
@@ -632,10 +591,11 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support a spread prop and another prop'
+    }
   )
+})
 
+test('should support a prop and a spread prop', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a b {...c} />'), {pragma: 'h'})),
     {
@@ -673,10 +633,11 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support a prop and a spread prop'
+    }
   )
+})
 
+test('should support two spread props', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a {...b} {...c} />'), {pragma: 'h'})),
     {
@@ -702,10 +663,11 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support two spread props'
+    }
   )
+})
 
+test('should support more complex spreads', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a {...{b:1,...c,d:2}} />'), {pragma: 'h'})),
     {
@@ -725,7 +687,10 @@ test('buildJsx', () => {
               value: {type: 'Literal', value: 1},
               kind: 'init'
             },
-            {type: 'SpreadElement', argument: {type: 'Identifier', name: 'c'}},
+            {
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'c'}
+            },
             {
               type: 'Property',
               method: false,
@@ -739,81 +704,72 @@ test('buildJsx', () => {
         }
       ],
       optional: false
-    },
-    'should support more complex spreads'
+    }
   )
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a>{1}</a>'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {type: 'Literal', value: null},
-        {type: 'Literal', value: 1}
-      ],
-      optional: false
-    },
-    'should support expressions content'
-  )
+test('should support expressions content', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a>{1}</a>'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {type: 'Literal', value: null},
+      {type: 'Literal', value: 1}
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a>{}</a>'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [{type: 'Literal', value: 'a'}],
-      optional: false
-    },
-    'should support empty expressions content'
-  )
+test('should support empty expressions content', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a>{}</a>'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [{type: 'Literal', value: 'a'}],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a>  b</a>'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {type: 'Literal', value: null},
-        {type: 'Literal', value: '  b'}
-      ],
-      optional: false
-    },
-    'should support initial spaces in content'
-  )
+test('should support initial spaces in content', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a>  b</a>'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {type: 'Literal', value: null},
+      {type: 'Literal', value: '  b'}
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a>b  </a>'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {type: 'Literal', value: null},
-        {type: 'Literal', value: 'b  '}
-      ],
-      optional: false
-    },
-    'should support final spaces in content'
-  )
+test('should support final spaces in content', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a>b  </a>'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {type: 'Literal', value: null},
+      {type: 'Literal', value: 'b  '}
+    ],
+    optional: false
+  })
+})
 
-  assert.deepEqual(
-    expression(buildJsx(parse('<a>  b  </a>'), {pragma: 'h'})),
-    {
-      type: 'CallExpression',
-      callee: {type: 'Identifier', name: 'h'},
-      arguments: [
-        {type: 'Literal', value: 'a'},
-        {type: 'Literal', value: null},
-        {type: 'Literal', value: '  b  '}
-      ],
-      optional: false
-    },
-    'should support initial and final spaces in content'
-  )
+test('should support initial and final spaces in content', () => {
+  assert.deepEqual(expression(buildJsx(parse('<a>  b  </a>'), {pragma: 'h'})), {
+    type: 'CallExpression',
+    callee: {type: 'Identifier', name: 'h'},
+    arguments: [
+      {type: 'Literal', value: 'a'},
+      {type: 'Literal', value: null},
+      {type: 'Literal', value: '  b  '}
+    ],
+    optional: false
+  })
+})
 
+test('should support spaces around line endings', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a> b \r c \n d \n </a>'), {pragma: 'h'})),
     {
@@ -825,10 +781,11 @@ test('buildJsx', () => {
         {type: 'Literal', value: ' b c d'}
       ],
       optional: false
-    },
-    'should support spaces around line endings'
+    }
   )
+})
 
+test('should support skip empty or whitespace only line endings', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a> b \r \n c \n\n d \n </a>'), {pragma: 'h'})),
     {
@@ -840,10 +797,11 @@ test('buildJsx', () => {
         {type: 'Literal', value: ' b c d'}
       ],
       optional: false
-    },
-    'should support skip empty or whitespace only line endings'
+    }
   )
+})
 
+test('should support skip whitespace only content', () => {
   assert.deepEqual(
     expression(buildJsx(parse('<a> \t\n </a>'), {pragma: 'h'})),
     {
@@ -851,10 +809,11 @@ test('buildJsx', () => {
       callee: {type: 'Identifier', name: 'h'},
       arguments: [{type: 'Literal', value: 'a'}],
       optional: false
-    },
-    'should support skip whitespace only content'
+    }
   )
+})
 
+test('should trim strings with leading line feed', () => {
   assert.deepEqual(
     expression(
       buildJsx(parse(['<a>', '  line1', '</a>'].join('\n')), {pragma: 'h'})
@@ -868,10 +827,11 @@ test('buildJsx', () => {
         {type: 'Literal', value: 'line1'}
       ],
       optional: false
-    },
-    'should trim strings with leading line feed'
+    }
   )
+})
 
+test('should trim strings with leading line feed (multiline test)', () => {
   assert.deepEqual(
     expression(
       buildJsx(parse(['<a>', '  line1{" "}', '  line2', '</a>'].join('\n')), {
@@ -889,10 +849,11 @@ test('buildJsx', () => {
         {type: 'Literal', value: 'line2'}
       ],
       optional: false
-    },
-    'should trim strings with leading line feed (multiline test)'
+    }
   )
+})
 
+test('should integrate w/ generators (`astring`)', () => {
   assert.equal(
     generate(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
@@ -900,10 +861,11 @@ test('buildJsx', () => {
         pragmaFrag: 'f'
       })
     ),
-    'h(f, null, h("a", Object.assign({\n  b: true,\n  c: "d",\n  e: f\n}, g), "h"));\n',
-    'should integrate w/ generators (`astring`)'
+    'h(f, null, h("a", Object.assign({\n  b: true,\n  c: "d",\n  e: f\n}, g), "h"));\n'
   )
+})
 
+test('should integrate w/ generators (`recast`)', () => {
   assert.equal(
     recast.print(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
@@ -911,10 +873,11 @@ test('buildJsx', () => {
         pragmaFrag: 'f'
       })
     ).code,
-    'h(f, null, h("a", Object.assign({\n    b: true,\n    c: "d",\n    e: f\n}, g), "h"));',
-    'should integrate w/ generators (`recast`)'
+    'h(f, null, h("a", Object.assign({\n    b: true,\n    c: "d",\n    e: f\n}, g), "h"));'
   )
+})
 
+test('should integrate w/ generators (`escodegen`)', () => {
   assert.equal(
     escodegen.generate(
       buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
@@ -922,10 +885,11 @@ test('buildJsx', () => {
         pragmaFrag: 'f'
       })
     ),
-    "h(f, null, h('a', Object.assign({\n    b: true,\n    c: 'd',\n    e: f\n}, g), 'h'));",
-    'should integrate w/ generators (`escodegen`)'
+    "h(f, null, h('a', Object.assign({\n    b: true,\n    c: 'd',\n    e: f\n}, g), 'h'));"
   )
+})
 
+test('should support positional info', () => {
   assert.deepEqual(
     buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>', false)),
     {
@@ -1122,7 +1086,10 @@ test('buildJsx', () => {
                 optional: false,
                 start: 5,
                 end: 34,
-                loc: {start: {line: 2, column: 2}, end: {line: 2, column: 31}},
+                loc: {
+                  start: {line: 2, column: 2},
+                  end: {line: 2, column: 31}
+                },
                 range: [5, 34]
               }
             ],
@@ -1136,57 +1103,56 @@ test('buildJsx', () => {
       ],
       sourceType: 'script',
       comments: []
-    },
-    'should support positional info'
+    }
   )
+})
 
-  assert.deepEqual(
-    buildJsx(parse('<><x /></>', true, false)),
-    {
-      type: 'Program',
-      body: [
-        {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'CallExpression',
-            callee: {
+test('should support no comments on `program`', () => {
+  assert.deepEqual(buildJsx(parse('<><x /></>', true, false)), {
+    type: 'Program',
+    body: [
+      {
+        type: 'ExpressionStatement',
+        expression: {
+          type: 'CallExpression',
+          callee: {
+            type: 'MemberExpression',
+            object: {type: 'Identifier', name: 'React'},
+            property: {type: 'Identifier', name: 'createElement'},
+            computed: false,
+            optional: false
+          },
+          arguments: [
+            {
               type: 'MemberExpression',
               object: {type: 'Identifier', name: 'React'},
-              property: {type: 'Identifier', name: 'createElement'},
+              property: {type: 'Identifier', name: 'Fragment'},
               computed: false,
               optional: false
             },
-            arguments: [
-              {
+            {type: 'Literal', value: null},
+            {
+              type: 'CallExpression',
+              callee: {
                 type: 'MemberExpression',
                 object: {type: 'Identifier', name: 'React'},
-                property: {type: 'Identifier', name: 'Fragment'},
+                property: {type: 'Identifier', name: 'createElement'},
                 computed: false,
                 optional: false
               },
-              {type: 'Literal', value: null},
-              {
-                type: 'CallExpression',
-                callee: {
-                  type: 'MemberExpression',
-                  object: {type: 'Identifier', name: 'React'},
-                  property: {type: 'Identifier', name: 'createElement'},
-                  computed: false,
-                  optional: false
-                },
-                arguments: [{type: 'Literal', value: 'x'}],
-                optional: false
-              }
-            ],
-            optional: false
-          }
+              arguments: [{type: 'Literal', value: 'x'}],
+              optional: false
+            }
+          ],
+          optional: false
         }
-      ],
-      sourceType: 'script'
-    },
-    'should support no comments on `program`'
-  )
+      }
+    ],
+    sourceType: 'script'
+  })
+})
 
+test('should support the automatic runtime (fragment, jsx, settings)', () => {
   assert.deepEqual(
     generate(buildJsx(parse('<>a</>'), {runtime: 'automatic'})),
     [
@@ -1195,10 +1161,11 @@ test('buildJsx', () => {
       '  children: "a"',
       '});',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (fragment, jsx, settings)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (jsxs, key, comment)', () => {
   assert.deepEqual(
     generate(buildJsx(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))),
     [
@@ -1207,10 +1174,11 @@ test('buildJsx', () => {
       '  children: ["b", 1]',
       '}, "a");',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (jsxs, key, comment)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (props, spread, children)', () => {
   assert.deepEqual(
     generate(buildJsx(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})),
     [
@@ -1221,10 +1189,11 @@ test('buildJsx', () => {
       '  children: "d"',
       '}));',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (props, spread, children)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (spread, props, children)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>'), {
@@ -1241,10 +1210,11 @@ test('buildJsx', () => {
       '  children: "f"',
       '}));',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (spread, props, children)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, children)', () => {
   assert.deepEqual(
     generate(buildJsx(parse('<a>b</a>'), {runtime: 'automatic'})),
     [
@@ -1253,30 +1223,33 @@ test('buildJsx', () => {
       '  children: "b"',
       '});',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, children)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, no children)', () => {
   assert.deepEqual(
     generate(buildJsx(parse('<a/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {});',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, no children)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (key, no props, no children)', () => {
   assert.deepEqual(
     generate(buildJsx(parse('<a key/>'), {runtime: 'automatic'})),
     [
       'import {jsx as _jsx} from "react/jsx-runtime";',
       '_jsx("a", {}, true);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (key, no props, no children)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (fragment, jsx, settings, development)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<>a</>', false), {
@@ -1295,10 +1268,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (fragment, jsx, settings, development)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (jsxs, key, comment, development)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a key="a">b{1}</a>', false), {
@@ -1317,10 +1291,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (jsxs, key, comment, development)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (props, spread, children, development)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a b="1" {...c}>d</a>', false), {
@@ -1341,10 +1316,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (props, spread, children, development)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (spread, props, children, development)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>', false), {
@@ -1367,10 +1343,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (spread, props, children, development)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, children, development)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a>b</a>', false), {
@@ -1389,10 +1366,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, children, development)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, no children, development)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a/>', false), {
@@ -1409,10 +1387,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, no children, development)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (key, no props, no children, development)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a key/>', false), {
@@ -1429,10 +1408,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (key, no props, no children, development)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, no children, development, no filePath)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a />', false), {
@@ -1448,10 +1428,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, no children, development, no filePath)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, no children, development, empty filePath)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a />', false), {
@@ -1468,10 +1449,11 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, no children, development, empty filePath)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, no children, development, no locations)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a />'), {
@@ -1486,10 +1468,11 @@ test('buildJsx', () => {
       '  fileName: "index.js"',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, no children, development, no locations)'
+    ].join('\n')
   )
+})
 
+test('should support the automatic runtime (no props, nested children, development, positional info)', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('<a>\n  <b />\n</a>', false), {
@@ -1512,24 +1495,22 @@ test('buildJsx', () => {
       '  columnNumber: 1',
       '}, this);',
       ''
-    ].join('\n'),
-    'should support the automatic runtime (no props, nested children, development, positional info)'
+    ].join('\n')
   )
+})
 
-  assert.throws(
-    () => {
-      buildJsx(parse('<a {...b} key/>'), {runtime: 'automatic'})
-    },
-    /Expected `key` to come before any spread expressions/,
-    'should throw on spread after `key`'
-  )
+test('should throw on spread after `key`', () => {
+  assert.throws(() => {
+    buildJsx(parse('<a {...b} key/>'), {runtime: 'automatic'})
+  }, /Expected `key` to come before any spread expressions/)
+})
 
+test('should prefer a `jsxRuntime` comment over a `runtime` option', () => {
   assert.deepEqual(
     generate(
       buildJsx(parse('/*@jsxRuntime classic*/ <a/>'), {runtime: 'automatic'})
     ),
-    'React.createElement("a");\n',
-    'should prefer a `jsxRuntime` comment over a `runtime` option'
+    'React.createElement("a");\n'
   )
 })
 
