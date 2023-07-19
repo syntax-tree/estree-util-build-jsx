@@ -25,7 +25,10 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should default to `React.createElement` / `React.Fragment`',
     function () {
-      assert.deepEqual(expression(buildJsx(parse('<><x /></>'))), {
+      const tree = parse('<><x /></>')
+      buildJsx(tree)
+
+      assert.deepEqual(expression(tree), {
         type: 'CallExpression',
         callee: {
           type: 'MemberExpression',
@@ -62,28 +65,31 @@ test('estree-util-build-jsx', async function (t) {
   )
 
   await t.test('should support `pragma`, `pragmaFrag`', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<><x /></>'), {pragma: 'a', pragmaFrag: 'b'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'a'},
-        arguments: [
-          {type: 'Identifier', name: 'b'},
-          {type: 'Literal', value: null},
-          {
-            type: 'CallExpression',
-            callee: {type: 'Identifier', name: 'a'},
-            arguments: [{type: 'Literal', value: 'x'}],
-            optional: false
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<><x /></>')
+    buildJsx(tree, {pragma: 'a', pragmaFrag: 'b'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'a'},
+      arguments: [
+        {type: 'Identifier', name: 'b'},
+        {type: 'Literal', value: null},
+        {
+          type: 'CallExpression',
+          callee: {type: 'Identifier', name: 'a'},
+          arguments: [{type: 'Literal', value: 'x'}],
+          optional: false
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support `pragma` w/ non-identifiers (1)', function () {
-    assert.deepEqual(expression(buildJsx(parse('<x />'), {pragma: 'a.b-c'})), {
+    const tree = parse('<x />')
+    buildJsx(tree, {pragma: 'a.b-c'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {
         type: 'MemberExpression',
@@ -95,34 +101,29 @@ test('estree-util-build-jsx', async function (t) {
       arguments: [{type: 'Literal', value: 'x'}],
       optional: false
     })
-  })
 
-  await t.test('should support `pragma` w/ non-identifiers (2)', function () {
-    assert.equal(
-      generate(buildJsx(parse('<x />'), {pragma: 'a.b-c'})),
-      'a["b-c"]("x");\n'
-    )
+    assert.equal(generate(tree), 'a["b-c"]("x");\n')
   })
 
   await t.test('should support `@jsx`, `@jsxFrag` comments', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('/* @jsx a @jsxFrag b */\n<><x /></>'))),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'a'},
-        arguments: [
-          {type: 'Identifier', name: 'b'},
-          {type: 'Literal', value: null},
-          {
-            type: 'CallExpression',
-            callee: {type: 'Identifier', name: 'a'},
-            arguments: [{type: 'Literal', value: 'x'}],
-            optional: false
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('/* @jsx a @jsxFrag b */\n<><x /></>')
+    buildJsx(tree)
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'a'},
+      arguments: [
+        {type: 'Identifier', name: 'b'},
+        {type: 'Literal', value: null},
+        {
+          type: 'CallExpression',
+          callee: {type: 'Identifier', name: 'a'},
+          arguments: [{type: 'Literal', value: 'x'}],
+          optional: false
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test(
@@ -162,7 +163,10 @@ test('estree-util-build-jsx', async function (t) {
   )
 
   await t.test('should ignore other comments', function () {
-    assert.deepEqual(expression(buildJsx(parse('// a\n<><x /></>'))), {
+    const tree = parse('// a\n<><x /></>')
+    buildJsx(tree)
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {
         type: 'MemberExpression',
@@ -198,7 +202,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should support a self-closing element', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a />'), {pragma: 'h'})), {
+    const tree = parse('<a />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [{type: 'Literal', value: 'a'}],
@@ -207,7 +214,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should support a closed element', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a>b</a>'), {pragma: 'h'})), {
+    const tree = parse('<a>b</a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [
@@ -222,7 +232,10 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support dots in a tag name for member expressions',
     function () {
-      assert.deepEqual(expression(buildJsx(parse('<a.b />'), {pragma: 'h'})), {
+      const tree = parse('<a.b />')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
         type: 'CallExpression',
         callee: {type: 'Identifier', name: 'h'},
         arguments: [
@@ -242,108 +255,94 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support dots *and* dashes in tag names (1)',
     function () {
-      assert.deepEqual(
-        expression(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
-        {
-          type: 'CallExpression',
-          callee: {type: 'Identifier', name: 'h'},
-          arguments: [
-            {
-              type: 'MemberExpression',
-              object: {type: 'Identifier', name: 'a'},
-              property: {type: 'Literal', value: 'b-c'},
-              computed: true,
-              optional: false
-            }
-          ],
-          optional: false
-        }
-      )
+      const tree = parse('<a.b-c />')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
+        type: 'CallExpression',
+        callee: {type: 'Identifier', name: 'h'},
+        arguments: [
+          {
+            type: 'MemberExpression',
+            object: {type: 'Identifier', name: 'a'},
+            property: {type: 'Literal', value: 'b-c'},
+            computed: true,
+            optional: false
+          }
+        ],
+        optional: false
+      })
+
+      assert.equal(generate(tree), 'h(a["b-c"]);\n')
     }
   )
 
   await t.test(
     'should support dots *and* dashes in tag names (2)',
     function () {
-      assert.equal(
-        generate(buildJsx(parse('<a.b-c />'), {pragma: 'h'})),
-        'h(a["b-c"]);\n'
-      )
+      const tree = parse('<a-b.c />')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
+        type: 'CallExpression',
+        callee: {type: 'Identifier', name: 'h'},
+        arguments: [
+          {
+            type: 'MemberExpression',
+            object: {type: 'Literal', value: 'a-b'},
+            property: {type: 'Identifier', name: 'c'},
+            computed: false,
+            optional: false
+          }
+        ],
+        optional: false
+      })
+
+      assert.equal(generate(tree), 'h(("a-b").c);\n')
     }
   )
-
-  await t.test(
-    'should support dots *and* dashes in tag names (3)',
-    function () {
-      assert.deepEqual(
-        expression(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
-        {
-          type: 'CallExpression',
-          callee: {type: 'Identifier', name: 'h'},
-          arguments: [
-            {
-              type: 'MemberExpression',
-              object: {type: 'Literal', value: 'a-b'},
-              property: {type: 'Identifier', name: 'c'},
-              computed: false,
-              optional: false
-            }
-          ],
-          optional: false
-        }
-      )
-    }
-  )
-
-  await t.test(
-    'should support dots *and* dashes in tag names (4)',
-    function () {
-      assert.equal(
-        generate(buildJsx(parse('<a-b.c />'), {pragma: 'h'})),
-        'h(("a-b").c);\n'
-      )
-    }
-  )
-
   await t.test(
     'should support dots in a tag name for member expressions (2)',
     function () {
-      assert.deepEqual(
-        expression(buildJsx(parse('<a.b.c.d />'), {pragma: 'h'})),
-        {
-          type: 'CallExpression',
-          callee: {type: 'Identifier', name: 'h'},
-          arguments: [
-            {
+      const tree = parse('<a.b.c.d />')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
+        type: 'CallExpression',
+        callee: {type: 'Identifier', name: 'h'},
+        arguments: [
+          {
+            type: 'MemberExpression',
+            object: {
               type: 'MemberExpression',
               object: {
                 type: 'MemberExpression',
-                object: {
-                  type: 'MemberExpression',
-                  object: {type: 'Identifier', name: 'a'},
-                  property: {type: 'Identifier', name: 'b'},
-                  computed: false,
-                  optional: false
-                },
-                property: {type: 'Identifier', name: 'c'},
+                object: {type: 'Identifier', name: 'a'},
+                property: {type: 'Identifier', name: 'b'},
                 computed: false,
                 optional: false
               },
-              property: {type: 'Identifier', name: 'd'},
+              property: {type: 'Identifier', name: 'c'},
               computed: false,
               optional: false
-            }
-          ],
-          optional: false
-        }
-      )
+            },
+            property: {type: 'Identifier', name: 'd'},
+            computed: false,
+            optional: false
+          }
+        ],
+        optional: false
+      })
     }
   )
 
   await t.test(
     'should support colons in a tag name for namespaces',
     function () {
-      assert.deepEqual(expression(buildJsx(parse('<a:b />'), {pragma: 'h'})), {
+      const tree = parse('<a:b />')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
         type: 'CallExpression',
         callee: {type: 'Identifier', name: 'h'},
         arguments: [{type: 'Literal', value: 'a:b'}],
@@ -353,7 +352,10 @@ test('estree-util-build-jsx', async function (t) {
   )
 
   await t.test('should support dashes in tag names', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a-b />'), {pragma: 'h'})), {
+    const tree = parse('<a-b />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [{type: 'Literal', value: 'a-b'}],
@@ -362,7 +364,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should non-lowercase for components in tag names', function () {
-    assert.deepEqual(expression(buildJsx(parse('<A />'), {pragma: 'h'})), {
+    const tree = parse('<A />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [{type: 'Identifier', name: 'A'}],
@@ -371,7 +376,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should support a boolean prop', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a b />'), {pragma: 'h'})), {
+    const tree = parse('<a b />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [
@@ -396,7 +404,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should support colons in prop names', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a b:c />'), {pragma: 'h'})), {
+    const tree = parse('<a b:c />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [
@@ -423,341 +434,342 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support a prop name that can’t be an identifier',
     function () {
-      assert.deepEqual(
-        expression(buildJsx(parse('<a b-c />'), {pragma: 'h'})),
-        {
-          type: 'CallExpression',
-          callee: {type: 'Identifier', name: 'h'},
-          arguments: [
-            {type: 'Literal', value: 'a'},
-            {
-              type: 'ObjectExpression',
-              properties: [
-                {
-                  type: 'Property',
-                  key: {type: 'Literal', value: 'b-c'},
-                  value: {type: 'Literal', value: true},
-                  kind: 'init',
-                  method: false,
-                  shorthand: false,
-                  computed: false
-                }
-              ]
-            }
-          ],
-          optional: false
-        }
-      )
+      const tree = parse('<a b-c />')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
+        type: 'CallExpression',
+        callee: {type: 'Identifier', name: 'h'},
+        arguments: [
+          {type: 'Literal', value: 'a'},
+          {
+            type: 'ObjectExpression',
+            properties: [
+              {
+                type: 'Property',
+                key: {type: 'Literal', value: 'b-c'},
+                value: {type: 'Literal', value: true},
+                kind: 'init',
+                method: false,
+                shorthand: false,
+                computed: false
+              }
+            ]
+          }
+        ],
+        optional: false
+      })
     }
   )
 
   await t.test('should support a prop value', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a b="c" />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'Property',
-                key: {type: 'Identifier', name: 'b'},
-                value: {type: 'Literal', value: 'c'},
-                kind: 'init',
-                method: false,
-                shorthand: false,
-                computed: false
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a b="c" />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'b'},
+              value: {type: 'Literal', value: 'c'},
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support an expression as a prop value', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a b={c} />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'Property',
-                key: {type: 'Identifier', name: 'b'},
-                value: {type: 'Identifier', name: 'c'},
-                kind: 'init',
-                method: false,
-                shorthand: false,
-                computed: false
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a b={c} />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'b'},
+              value: {type: 'Identifier', name: 'c'},
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support an expression as a prop value (2)', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a b={1} />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'Property',
-                key: {type: 'Identifier', name: 'b'},
-                value: {type: 'Literal', value: 1},
-                kind: 'init',
-                method: false,
-                shorthand: false,
-                computed: false
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a b={1} />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'b'},
+              value: {type: 'Literal', value: 1},
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support a fragment as a prop value', function () {
-    assert.deepEqual(
-      expression(
-        buildJsx(parse('<a b=<>c</> />'), {pragma: 'h', pragmaFrag: 'f'})
-      ),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'Property',
-                key: {type: 'Identifier', name: 'b'},
-                value: {
-                  type: 'CallExpression',
-                  callee: {type: 'Identifier', name: 'h'},
-                  arguments: [
-                    {type: 'Identifier', name: 'f'},
-                    {type: 'Literal', value: null},
-                    {type: 'Literal', value: 'c'}
-                  ],
-                  optional: false
-                },
-                kind: 'init',
-                method: false,
-                shorthand: false,
-                computed: false
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a b=<>c</> />')
+    buildJsx(tree, {pragma: 'h', pragmaFrag: 'f'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'b'},
+              value: {
+                type: 'CallExpression',
+                callee: {type: 'Identifier', name: 'h'},
+                arguments: [
+                  {type: 'Identifier', name: 'f'},
+                  {type: 'Literal', value: null},
+                  {type: 'Literal', value: 'c'}
+                ],
+                optional: false
+              },
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support an element as a prop value', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a b=<c /> />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'Property',
-                key: {type: 'Identifier', name: 'b'},
-                value: {
-                  type: 'CallExpression',
-                  callee: {type: 'Identifier', name: 'h'},
-                  arguments: [{type: 'Literal', value: 'c'}],
-                  optional: false
-                },
-                kind: 'init',
-                method: false,
-                shorthand: false,
-                computed: false
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a b=<c /> />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'b'},
+              value: {
+                type: 'CallExpression',
+                callee: {type: 'Identifier', name: 'h'},
+                arguments: [{type: 'Literal', value: 'c'}],
+                optional: false
+              },
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support a single spread prop', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a {...b} />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {type: 'SpreadElement', argument: {type: 'Identifier', name: 'b'}}
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a {...b} />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {type: 'SpreadElement', argument: {type: 'Identifier', name: 'b'}}
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support a spread prop and another prop', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a {...b} c />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'SpreadElement',
-                argument: {type: 'Identifier', name: 'b'}
-              },
-              {
-                type: 'Property',
-                key: {type: 'Identifier', name: 'c'},
-                value: {type: 'Literal', value: true},
-                kind: 'init',
-                method: false,
-                shorthand: false,
-                computed: false
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a {...b} c />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'b'}
+            },
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'c'},
+              value: {type: 'Literal', value: true},
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support a prop and a spread prop', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a b {...c} />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'Property',
-                key: {type: 'Identifier', name: 'b'},
-                value: {type: 'Literal', value: true},
-                kind: 'init',
-                method: false,
-                shorthand: false,
-                computed: false
-              },
-              {type: 'SpreadElement', argument: {type: 'Identifier', name: 'c'}}
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a b {...c} />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              key: {type: 'Identifier', name: 'b'},
+              value: {type: 'Literal', value: true},
+              kind: 'init',
+              method: false,
+              shorthand: false,
+              computed: false
+            },
+            {type: 'SpreadElement', argument: {type: 'Identifier', name: 'c'}}
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support two spread props', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a {...b} {...c} />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'SpreadElement',
-                argument: {type: 'Identifier', name: 'b'}
-              },
-              {
-                type: 'SpreadElement',
-                argument: {type: 'Identifier', name: 'c'}
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a {...b} {...c} />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'b'}
+            },
+            {
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'c'}
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support more complex spreads', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a {...{b:1,...c,d:2}} />'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {
-            type: 'ObjectExpression',
-            properties: [
-              {
-                type: 'Property',
-                method: false,
-                shorthand: false,
-                computed: false,
-                key: {type: 'Identifier', name: 'b'},
-                value: {type: 'Literal', value: 1},
-                kind: 'init'
-              },
-              {
-                type: 'SpreadElement',
-                argument: {type: 'Identifier', name: 'c'}
-              },
-              {
-                type: 'Property',
-                method: false,
-                shorthand: false,
-                computed: false,
-                key: {type: 'Identifier', name: 'd'},
-                value: {type: 'Literal', value: 2},
-                kind: 'init'
-              }
-            ]
-          }
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a {...{b:1,...c,d:2}} />')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {
+          type: 'ObjectExpression',
+          properties: [
+            {
+              type: 'Property',
+              method: false,
+              shorthand: false,
+              computed: false,
+              key: {type: 'Identifier', name: 'b'},
+              value: {type: 'Literal', value: 1},
+              kind: 'init'
+            },
+            {
+              type: 'SpreadElement',
+              argument: {type: 'Identifier', name: 'c'}
+            },
+            {
+              type: 'Property',
+              method: false,
+              shorthand: false,
+              computed: false,
+              key: {type: 'Identifier', name: 'd'},
+              value: {type: 'Literal', value: 2},
+              kind: 'init'
+            }
+          ]
+        }
+      ],
+      optional: false
+    })
   })
 
   await t.test('should support expressions content', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a>{1}</a>'), {pragma: 'h'})), {
+    const tree = parse('<a>{1}</a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [
@@ -770,7 +782,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should support empty expressions content', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a>{}</a>'), {pragma: 'h'})), {
+    const tree = parse('<a>{}</a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [{type: 'Literal', value: 'a'}],
@@ -779,7 +794,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should support initial spaces in content', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a>  b</a>'), {pragma: 'h'})), {
+    const tree = parse('<a>  b</a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [
@@ -792,7 +810,10 @@ test('estree-util-build-jsx', async function (t) {
   })
 
   await t.test('should support final spaces in content', function () {
-    assert.deepEqual(expression(buildJsx(parse('<a>b  </a>'), {pragma: 'h'})), {
+    const tree = parse('<a>b  </a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
       type: 'CallExpression',
       callee: {type: 'Identifier', name: 'h'},
       arguments: [
@@ -807,26 +828,45 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support initial and final spaces in content',
     function () {
-      assert.deepEqual(
-        expression(buildJsx(parse('<a>  b  </a>'), {pragma: 'h'})),
-        {
-          type: 'CallExpression',
-          callee: {type: 'Identifier', name: 'h'},
-          arguments: [
-            {type: 'Literal', value: 'a'},
-            {type: 'Literal', value: null},
-            {type: 'Literal', value: '  b  '}
-          ],
-          optional: false
-        }
-      )
+      const tree = parse('<a>  b  </a>')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
+        type: 'CallExpression',
+        callee: {type: 'Identifier', name: 'h'},
+        arguments: [
+          {type: 'Literal', value: 'a'},
+          {type: 'Literal', value: null},
+          {type: 'Literal', value: '  b  '}
+        ],
+        optional: false
+      })
     }
   )
 
   await t.test('should support spaces around line endings', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a> b \r c \n d \n </a>'), {pragma: 'h'})),
-      {
+    const tree = parse('<a> b \r c \n d \n </a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {type: 'Literal', value: null},
+        {type: 'Literal', value: ' b c d'}
+      ],
+      optional: false
+    })
+  })
+
+  await t.test(
+    'should support skip empty or whitespace only line endings',
+    function () {
+      const tree = parse('<a> b \r \n c \n\n d \n </a>')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
         type: 'CallExpression',
         callee: {type: 'Identifier', name: 'h'},
         arguments: [
@@ -835,177 +875,133 @@ test('estree-util-build-jsx', async function (t) {
           {type: 'Literal', value: ' b c d'}
         ],
         optional: false
-      }
-    )
-  })
-
-  await t.test(
-    'should support skip empty or whitespace only line endings',
-    function () {
-      assert.deepEqual(
-        expression(
-          buildJsx(parse('<a> b \r \n c \n\n d \n </a>'), {pragma: 'h'})
-        ),
-        {
-          type: 'CallExpression',
-          callee: {type: 'Identifier', name: 'h'},
-          arguments: [
-            {type: 'Literal', value: 'a'},
-            {type: 'Literal', value: null},
-            {type: 'Literal', value: ' b c d'}
-          ],
-          optional: false
-        }
-      )
+      })
     }
   )
 
   await t.test('should support skip whitespace only content', function () {
-    assert.deepEqual(
-      expression(buildJsx(parse('<a> \t\n </a>'), {pragma: 'h'})),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [{type: 'Literal', value: 'a'}],
-        optional: false
-      }
-    )
+    const tree = parse('<a> \t\n </a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [{type: 'Literal', value: 'a'}],
+      optional: false
+    })
   })
 
   await t.test('should trim strings with leading line feed', function () {
-    assert.deepEqual(
-      expression(
-        buildJsx(parse(['<a>', '  line1', '</a>'].join('\n')), {pragma: 'h'})
-      ),
-      {
-        type: 'CallExpression',
-        callee: {type: 'Identifier', name: 'h'},
-        arguments: [
-          {type: 'Literal', value: 'a'},
-          {type: 'Literal', value: null},
-          {type: 'Literal', value: 'line1'}
-        ],
-        optional: false
-      }
-    )
+    const tree = parse('<a>\n  line1\n</a>')
+    buildJsx(tree, {pragma: 'h'})
+
+    assert.deepEqual(expression(tree), {
+      type: 'CallExpression',
+      callee: {type: 'Identifier', name: 'h'},
+      arguments: [
+        {type: 'Literal', value: 'a'},
+        {type: 'Literal', value: null},
+        {type: 'Literal', value: 'line1'}
+      ],
+      optional: false
+    })
   })
 
   await t.test(
     'should trim strings with leading line feed (multiline test)',
     function () {
-      assert.deepEqual(
-        expression(
-          buildJsx(
-            parse(['<a>', '  line1{" "}', '  line2', '</a>'].join('\n')),
-            {
-              pragma: 'h'
-            }
-          )
-        ),
-        {
-          type: 'CallExpression',
-          callee: {type: 'Identifier', name: 'h'},
-          arguments: [
-            {type: 'Literal', value: 'a'},
-            {type: 'Literal', value: null},
-            {type: 'Literal', value: 'line1'},
-            {type: 'Literal', value: ' '},
-            {type: 'Literal', value: 'line2'}
-          ],
-          optional: false
-        }
-      )
+      const tree = parse('<a>\n  line1{" "}\n  line2\n</a>')
+      buildJsx(tree, {pragma: 'h'})
+
+      assert.deepEqual(expression(tree), {
+        type: 'CallExpression',
+        callee: {type: 'Identifier', name: 'h'},
+        arguments: [
+          {type: 'Literal', value: 'a'},
+          {type: 'Literal', value: null},
+          {type: 'Literal', value: 'line1'},
+          {type: 'Literal', value: ' '},
+          {type: 'Literal', value: 'line2'}
+        ],
+        optional: false
+      })
     }
   )
 
   await t.test('should integrate w/ generators (`astring`)', function () {
-    assert.equal(
-      generate(
-        buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
-          pragma: 'h',
-          pragmaFrag: 'f'
-        })
-      ),
+    const tree = parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>')
+    buildJsx(tree, {pragma: 'h', pragmaFrag: 'f'})
+
+    assert.deepEqual(
+      generate(tree),
       'h(f, null, h("a", {\n  b: true,\n  c: "d",\n  e: f,\n  ...g\n}, "h"));\n'
     )
   })
 
   await t.test('should support positional info', function () {
-    assert.deepEqual(
-      buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>', false)),
-      {
-        type: 'Program',
-        start: 0,
-        end: 38,
-        loc: {start: {line: 1, column: 0}, end: {line: 3, column: 3}},
-        range: [0, 38],
-        body: [
-          {
-            type: 'ExpressionStatement',
-            start: 0,
-            end: 38,
-            loc: {start: {line: 1, column: 0}, end: {line: 3, column: 3}},
-            range: [0, 38],
-            expression: {
-              type: 'CallExpression',
-              callee: {
+    const tree = parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>', false)
+    buildJsx(tree)
+
+    assert.deepEqual(tree, {
+      type: 'Program',
+      start: 0,
+      end: 38,
+      loc: {start: {line: 1, column: 0}, end: {line: 3, column: 3}},
+      range: [0, 38],
+      body: [
+        {
+          type: 'ExpressionStatement',
+          start: 0,
+          end: 38,
+          loc: {start: {line: 1, column: 0}, end: {line: 3, column: 3}},
+          range: [0, 38],
+          expression: {
+            type: 'CallExpression',
+            callee: {
+              type: 'MemberExpression',
+              object: {type: 'Identifier', name: 'React'},
+              property: {type: 'Identifier', name: 'createElement'},
+              computed: false,
+              optional: false
+            },
+            arguments: [
+              {
                 type: 'MemberExpression',
                 object: {type: 'Identifier', name: 'React'},
-                property: {type: 'Identifier', name: 'createElement'},
+                property: {type: 'Identifier', name: 'Fragment'},
                 computed: false,
                 optional: false
               },
-              arguments: [
-                {
+              {type: 'Literal', value: null},
+              {
+                type: 'CallExpression',
+                callee: {
                   type: 'MemberExpression',
                   object: {type: 'Identifier', name: 'React'},
-                  property: {type: 'Identifier', name: 'Fragment'},
+                  property: {type: 'Identifier', name: 'createElement'},
                   computed: false,
                   optional: false
                 },
-                {type: 'Literal', value: null},
-                {
-                  type: 'CallExpression',
-                  callee: {
-                    type: 'MemberExpression',
-                    object: {type: 'Identifier', name: 'React'},
-                    property: {type: 'Identifier', name: 'createElement'},
-                    computed: false,
-                    optional: false
-                  },
-                  arguments: [
-                    {
-                      type: 'Literal',
-                      value: 'a',
-                      start: 6,
-                      end: 7,
-                      loc: {
-                        start: {line: 2, column: 3},
-                        end: {line: 2, column: 4}
-                      },
-                      range: [6, 7]
+                arguments: [
+                  {
+                    type: 'Literal',
+                    value: 'a',
+                    start: 6,
+                    end: 7,
+                    loc: {
+                      start: {line: 2, column: 3},
+                      end: {line: 2, column: 4}
                     },
-                    {
-                      type: 'ObjectExpression',
-                      properties: [
-                        {
-                          type: 'Property',
-                          key: {
-                            type: 'Identifier',
-                            name: 'b',
-                            start: 8,
-                            end: 9,
-                            loc: {
-                              start: {line: 2, column: 5},
-                              end: {line: 2, column: 6}
-                            },
-                            range: [8, 9]
-                          },
-                          value: {type: 'Literal', value: true},
-                          kind: 'init',
-                          method: false,
-                          shorthand: false,
-                          computed: false,
+                    range: [6, 7]
+                  },
+                  {
+                    type: 'ObjectExpression',
+                    properties: [
+                      {
+                        type: 'Property',
+                        key: {
+                          type: 'Identifier',
+                          name: 'b',
                           start: 8,
                           end: 9,
                           loc: {
@@ -1014,132 +1010,147 @@ test('estree-util-build-jsx', async function (t) {
                           },
                           range: [8, 9]
                         },
-                        {
-                          type: 'Property',
-                          key: {
-                            type: 'Identifier',
-                            name: 'c',
-                            start: 10,
-                            end: 11,
-                            loc: {
-                              start: {line: 2, column: 7},
-                              end: {line: 2, column: 8}
-                            },
-                            range: [10, 11]
-                          },
-                          value: {
-                            type: 'Literal',
-                            start: 12,
-                            end: 15,
-                            loc: {
-                              start: {line: 2, column: 9},
-                              end: {line: 2, column: 12}
-                            },
-                            range: [12, 15],
-                            value: 'd'
-                          },
-                          kind: 'init',
-                          method: false,
-                          shorthand: false,
-                          computed: false,
+                        value: {type: 'Literal', value: true},
+                        kind: 'init',
+                        method: false,
+                        shorthand: false,
+                        computed: false,
+                        start: 8,
+                        end: 9,
+                        loc: {
+                          start: {line: 2, column: 5},
+                          end: {line: 2, column: 6}
+                        },
+                        range: [8, 9]
+                      },
+                      {
+                        type: 'Property',
+                        key: {
+                          type: 'Identifier',
+                          name: 'c',
                           start: 10,
-                          end: 15,
+                          end: 11,
                           loc: {
                             start: {line: 2, column: 7},
+                            end: {line: 2, column: 8}
+                          },
+                          range: [10, 11]
+                        },
+                        value: {
+                          type: 'Literal',
+                          start: 12,
+                          end: 15,
+                          loc: {
+                            start: {line: 2, column: 9},
                             end: {line: 2, column: 12}
                           },
-                          range: [10, 15]
+                          range: [12, 15],
+                          value: 'd'
                         },
-                        {
-                          type: 'Property',
-                          key: {
-                            type: 'Identifier',
-                            name: 'e',
-                            start: 16,
-                            end: 17,
-                            loc: {
-                              start: {line: 2, column: 13},
-                              end: {line: 2, column: 14}
-                            },
-                            range: [16, 17]
-                          },
-                          value: {
-                            type: 'Identifier',
-                            start: 19,
-                            end: 20,
-                            loc: {
-                              start: {line: 2, column: 16},
-                              end: {line: 2, column: 17}
-                            },
-                            range: [19, 20],
-                            name: 'f'
-                          },
-                          kind: 'init',
-                          method: false,
-                          shorthand: false,
-                          computed: false,
+                        kind: 'init',
+                        method: false,
+                        shorthand: false,
+                        computed: false,
+                        start: 10,
+                        end: 15,
+                        loc: {
+                          start: {line: 2, column: 7},
+                          end: {line: 2, column: 12}
+                        },
+                        range: [10, 15]
+                      },
+                      {
+                        type: 'Property',
+                        key: {
+                          type: 'Identifier',
+                          name: 'e',
                           start: 16,
-                          end: 21,
+                          end: 17,
                           loc: {
                             start: {line: 2, column: 13},
-                            end: {line: 2, column: 18}
+                            end: {line: 2, column: 14}
                           },
-                          range: [16, 21]
+                          range: [16, 17]
                         },
-                        {
-                          type: 'SpreadElement',
-                          argument: {
-                            type: 'Identifier',
-                            start: 26,
-                            end: 27,
-                            loc: {
-                              start: {line: 2, column: 23},
-                              end: {line: 2, column: 24}
-                            },
-                            range: [26, 27],
-                            name: 'g'
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      type: 'Literal',
-                      value: 'h',
-                      start: 29,
-                      end: 30,
-                      loc: {
-                        start: {line: 2, column: 26},
-                        end: {line: 2, column: 27}
+                        value: {
+                          type: 'Identifier',
+                          start: 19,
+                          end: 20,
+                          loc: {
+                            start: {line: 2, column: 16},
+                            end: {line: 2, column: 17}
+                          },
+                          range: [19, 20],
+                          name: 'f'
+                        },
+                        kind: 'init',
+                        method: false,
+                        shorthand: false,
+                        computed: false,
+                        start: 16,
+                        end: 21,
+                        loc: {
+                          start: {line: 2, column: 13},
+                          end: {line: 2, column: 18}
+                        },
+                        range: [16, 21]
                       },
-                      range: [29, 30]
-                    }
-                  ],
-                  optional: false,
-                  start: 5,
-                  end: 34,
-                  loc: {
-                    start: {line: 2, column: 2},
-                    end: {line: 2, column: 31}
+                      {
+                        type: 'SpreadElement',
+                        argument: {
+                          type: 'Identifier',
+                          start: 26,
+                          end: 27,
+                          loc: {
+                            start: {line: 2, column: 23},
+                            end: {line: 2, column: 24}
+                          },
+                          range: [26, 27],
+                          name: 'g'
+                        }
+                      }
+                    ]
                   },
-                  range: [5, 34]
-                }
-              ],
-              optional: false,
-              start: 0,
-              end: 38,
-              loc: {start: {line: 1, column: 0}, end: {line: 3, column: 3}},
-              range: [0, 38]
-            }
+                  {
+                    type: 'Literal',
+                    value: 'h',
+                    start: 29,
+                    end: 30,
+                    loc: {
+                      start: {line: 2, column: 26},
+                      end: {line: 2, column: 27}
+                    },
+                    range: [29, 30]
+                  }
+                ],
+                optional: false,
+                start: 5,
+                end: 34,
+                loc: {
+                  start: {line: 2, column: 2},
+                  end: {line: 2, column: 31}
+                },
+                range: [5, 34]
+              }
+            ],
+            optional: false,
+            start: 0,
+            end: 38,
+            loc: {start: {line: 1, column: 0}, end: {line: 3, column: 3}},
+            range: [0, 38]
           }
-        ],
-        sourceType: 'script',
-        comments: []
-      }
-    )
+        }
+      ],
+      sourceType: 'script',
+      comments: []
+    })
   })
 
   await t.test('should support no comments on `program`', function () {
-    assert.deepEqual(buildJsx(parse('<><x /></>', true, false)), {
+    const tree = parse('<><x /></>', true, false)
+    buildJsx(tree)
+
+    assert.deepEqual(tree, {
       type: 'Program',
       body: [
         {
@@ -1186,8 +1197,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (fragment, jsx, settings)',
     function () {
-      assert.deepEqual(
-        generate(buildJsx(parse('<>a</>'), {runtime: 'automatic'})),
+      const tree = parse('<>a</>')
+      buildJsx(tree, {runtime: 'automatic'})
+
+      assert.equal(
+        generate(tree),
         [
           'import {Fragment as _Fragment, jsx as _jsx} from "react/jsx-runtime";',
           '_jsx(_Fragment, {',
@@ -1202,10 +1216,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (jsxs, key, comment)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>'))
-        ),
+      const tree = parse('/*@jsxRuntime automatic*/\n<a key="a">b{1}</a>')
+      buildJsx(tree)
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxs as _jsxs} from "react/jsx-runtime";',
           '_jsxs("a", {',
@@ -1220,10 +1235,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (props, spread, children)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a b="1" {...c}>d</a>'), {runtime: 'automatic'})
-        ),
+      const tree = parse('<a b="1" {...c}>d</a>')
+      buildJsx(tree, {runtime: 'automatic'})
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsx as _jsx} from "react/jsx-runtime";',
           '_jsx("a", {',
@@ -1240,12 +1256,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (spread, props, children)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>'), {
-            runtime: 'automatic'
-          })
-        ),
+      const tree = parse('<a {...{b: 1, c: 2}} d="e">f</a>')
+      buildJsx(tree, {runtime: 'automatic'})
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsx as _jsx} from "react/jsx-runtime";',
           '_jsx("a", {',
@@ -1263,8 +1278,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, children)',
     function () {
-      assert.deepEqual(
-        generate(buildJsx(parse('<a>b</a>'), {runtime: 'automatic'})),
+      const tree = parse('<a>b</a>')
+      buildJsx(tree, {runtime: 'automatic'})
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsx as _jsx} from "react/jsx-runtime";',
           '_jsx("a", {',
@@ -1279,8 +1297,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, no children)',
     function () {
-      assert.deepEqual(
-        generate(buildJsx(parse('<a/>'), {runtime: 'automatic'})),
+      const tree = parse('<a/>')
+      buildJsx(tree, {runtime: 'automatic'})
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsx as _jsx} from "react/jsx-runtime";',
           '_jsx("a", {});',
@@ -1293,8 +1314,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (key, no props, no children)',
     function () {
-      assert.deepEqual(
-        generate(buildJsx(parse('<a key/>'), {runtime: 'automatic'})),
+      const tree = parse('<a key/>')
+      buildJsx(tree, {runtime: 'automatic'})
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsx as _jsx} from "react/jsx-runtime";',
           '_jsx("a", {}, true);',
@@ -1307,14 +1331,15 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (fragment, jsx, settings, development)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<>a</>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<>a</>', false)
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {Fragment as _Fragment, jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV(_Fragment, {',
@@ -1333,14 +1358,15 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (jsxs, key, comment, development)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a key="a">b{1}</a>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a key="a">b{1}</a>', false)
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {',
@@ -1359,14 +1385,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (props, spread, children, development)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a b="1" {...c}>d</a>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a b="1" {...c}>d</a>', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {',
@@ -1387,14 +1415,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (spread, props, children, development)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a {...{b: 1, c: 2}} d="e">f</a>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a {...{b: 1, c: 2}} d="e">f</a>', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {',
@@ -1416,14 +1446,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, children, development)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a>b</a>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a>b</a>', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {',
@@ -1442,14 +1474,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, no children, development)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a/>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a/>', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {}, undefined, false, {',
@@ -1466,14 +1500,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (key, no props, no children, development)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a key/>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a key/>', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {}, true, false, {',
@@ -1490,13 +1526,15 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, no children, development, no filePath)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a />', false), {
-            runtime: 'automatic',
-            development: true
-          })
-        ),
+      const tree = parse('<a />', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {}, undefined, false, {',
@@ -1513,14 +1551,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, no children, development, empty filePath)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a />', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: ''
-          })
-        ),
+      const tree = parse('<a />', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: ''
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {}, undefined, false, {',
@@ -1537,14 +1577,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, no children, development, no locations)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a />'), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a />')
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {}, undefined, false, {',
@@ -1559,14 +1601,16 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should support the automatic runtime (no props, nested children, development, positional info)',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('<a>\n  <b />\n</a>', false), {
-            runtime: 'automatic',
-            development: true,
-            filePath: 'index.js'
-          })
-        ),
+      const tree = parse('<a>\n  <b />\n</a>', false)
+
+      buildJsx(tree, {
+        runtime: 'automatic',
+        development: true,
+        filePath: 'index.js'
+      })
+
+      assert.equal(
+        generate(tree),
         [
           'import {jsxDEV as _jsxDEV} from "react/jsx-dev-runtime";',
           '_jsxDEV("a", {',
@@ -1595,14 +1639,11 @@ test('estree-util-build-jsx', async function (t) {
   await t.test(
     'should prefer a `jsxRuntime` comment over a `runtime` option',
     function () {
-      assert.deepEqual(
-        generate(
-          buildJsx(parse('/*@jsxRuntime classic*/ <a/>'), {
-            runtime: 'automatic'
-          })
-        ),
-        'React.createElement("a");\n'
-      )
+      const tree = parse('/*@jsxRuntime classic*/ <a/>')
+
+      buildJsx(tree, {runtime: 'automatic'})
+
+      assert.equal(generate(tree), 'React.createElement("a");\n')
     }
   )
 })

@@ -17,7 +17,7 @@
 *   [Install](#install)
 *   [Use](#use)
 *   [API](#api)
-    *   [`buildJsx(tree, options?)`](#buildjsxtree-options)
+    *   [`buildJsx(tree[, options])`](#buildjsxtree-options)
     *   [`Options`](#options)
     *   [`Runtime`](#runtime-1)
 *   [Examples](#examples)
@@ -126,7 +126,7 @@ console.log(x(null, null, 1 + 1, x("self-closing"), x("x", Object.assign({
 This package exports the identifier [`buildJsx`][build-jsx].
 There is no default export.
 
-### `buildJsx(tree, options?)`
+### `buildJsx(tree[, options])`
 
 Turn JSX in `tree` into function calls: `<x />` -> `h('x')`!
 
@@ -152,7 +152,7 @@ Some differences:
 
 ###### Returns
 
-Given, modified, `tree` ([`Node`][node]).
+Nothing (`undefined`).
 
 ### `Options`
 
