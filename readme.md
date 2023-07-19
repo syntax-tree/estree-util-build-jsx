@@ -52,14 +52,14 @@ npm install estree-util-build-jsx
 In Deno with [`esm.sh`][esmsh]:
 
 ```js
-import {buildJsx} from 'https://esm.sh/estree-util-build-jsx@2'
+import {buildJsx} from 'https://esm.sh/estree-util-build-jsx@3'
 ```
 
 In browsers with [`esm.sh`][esmsh]:
 
 ```html
 <script type="module">
-  import {buildJsx} from 'https://esm.sh/estree-util-build-jsx@2?bundle'
+  import {buildJsx} from 'https://esm.sh/estree-util-build-jsx@3?bundle'
 </script>
 ```
 
