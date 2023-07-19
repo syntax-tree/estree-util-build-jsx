@@ -4,8 +4,6 @@ import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
 import {walk} from 'estree-walker'
 import {generate} from 'astring'
-import recast from 'recast'
-import escodegen from 'escodegen'
 import {buildJsx} from './index.js'
 import * as mod from './index.js'
 
@@ -840,30 +838,6 @@ test('should integrate w/ generators (`astring`)', () => {
       })
     ),
     'h(f, null, h("a", {\n  b: true,\n  c: "d",\n  e: f,\n  ...g\n}, "h"));\n'
-  )
-})
-
-test('should integrate w/ generators (`recast`)', () => {
-  assert.equal(
-    recast.print(
-      buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
-        pragma: 'h',
-        pragmaFrag: 'f'
-      })
-    ).code,
-    'h(f, null, h("a", {\n    b: true,\n    c: "d",\n    e: f,\n    ...g\n}, "h"));'
-  )
-})
-
-test('should integrate w/ generators (`escodegen`)', () => {
-  assert.equal(
-    escodegen.generate(
-      buildJsx(parse('<>\n  <a b c="d" e={f} {...g}>h</a>\n</>'), {
-        pragma: 'h',
-        pragmaFrag: 'f'
-      })
-    ),
-    "h(f, null, h('a', {\n    b: true,\n    c: 'd',\n    e: f,\n    ...g\n}, 'h'));"
   )
 })
 

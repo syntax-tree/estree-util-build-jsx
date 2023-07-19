@@ -17,7 +17,6 @@
     "call",
     "acorn",
     "espree",
-    "recast",
     "react",
     "preact"
   ],
@@ -46,15 +45,12 @@
     "estree-walker": "^3.0.0"
   },
   "devDependencies": {
-    "@types/escodegen": "^0.0.7",
     "@types/node": "^20.0.0",
     "acorn": "^8.0.0",
     "acorn-jsx": "^5.0.0",
     "astring": "^1.0.0",
     "c8": "^8.0.0",
-    "escodegen": "^2.0.0",
     "prettier": "^3.0.0",
-    "recast": "^0.23.0",
     "remark-cli": "^11.0.0",
     "remark-preset-wooorm": "^9.0.0",
     "type-coverage": "^2.0.0",
