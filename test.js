@@ -9,17 +9,18 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {Parser} from 'acorn'
 import jsx from 'acorn-jsx'
-import {walk} from 'estree-walker'
 import {generate} from 'astring'
-import {buildJsx} from './index.js'
+import {buildJsx} from 'estree-util-build-jsx'
+import {walk} from 'estree-walker'
 
 const parser = Parser.extend(jsx())
 
 test('estree-util-build-jsx', async function (t) {
   await t.test('should expose the public api', async function () {
-    assert.deepEqual(Object.keys(await import('./index.js')).sort(), [
-      'buildJsx'
-    ])
+    assert.deepEqual(
+      Object.keys(await import('estree-util-build-jsx')).sort(),
+      ['buildJsx']
+    )
   })
 
   await t.test(
