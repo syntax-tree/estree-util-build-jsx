@@ -1647,6 +1647,17 @@ test('estree-util-build-jsx', async function (t) {
       assert.equal(generate(tree), 'React.createElement("a");\n')
     }
   )
+
+  await t.test('should keep directives first', function () {
+    const tree = parse('"use client"\nconst x = <a/>')
+
+    buildJsx(tree, {runtime: 'automatic'})
+
+    assert.equal(
+      generate(tree),
+      '"use client";\nimport {jsx as _jsx} from "react/jsx-runtime";\nconst x = _jsx("a", {});\n'
+    )
+  })
 })
 
 /**
