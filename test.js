@@ -1677,7 +1677,7 @@ function expression(program) {
 /**
  * Parse a string of JS.
  *
- * @param {string} doc
+ * @param {string} document
  *   Value.
  * @param {boolean} [clean=true]
  *   Clean positional info (default: `true`).
@@ -1686,12 +1686,11 @@ function expression(program) {
  * @returns {Program}
  *   ESTree program.
  */
-function parse(doc, clean, addComments) {
+function parse(document, clean, addComments) {
   /** @type {Array<Comment>} */
   const comments = []
-  // @ts-expect-error: acorn is similar enough to estree.
   const tree = /** @type {Program} */ (
-    parser.parse(doc, {
+    parser.parse(document, {
       ecmaVersion: 'latest',
       ranges: true,
       locations: true,
@@ -1704,6 +1703,7 @@ function parse(doc, clean, addComments) {
 
   if (clean !== false) walk(tree, {leave})
 
+  // eslint-disable-next-line unicorn/prefer-structured-clone -- JSON casting needed to remove class stuff.
   return JSON.parse(JSON.stringify(tree))
 }
 

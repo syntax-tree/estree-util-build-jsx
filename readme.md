@@ -12,22 +12,22 @@
 
 ## Contents
 
-*   [What is this?](#what-is-this)
-*   [When should I use this?](#when-should-i-use-this)
-*   [Install](#install)
-*   [Use](#use)
-*   [API](#api)
-    *   [`buildJsx(tree[, options])`](#buildjsxtree-options)
-    *   [`Options`](#options)
-    *   [`Runtime`](#runtime-1)
-*   [Examples](#examples)
-    *   [Example: use with Acorn](#example-use-with-acorn)
-*   [Types](#types)
-*   [Compatibility](#compatibility)
-*   [Related](#related)
-*   [Security](#security)
-*   [Contribute](#contribute)
-*   [License](#license)
+* [What is this?](#what-is-this)
+* [When should I use this?](#when-should-i-use-this)
+* [Install](#install)
+* [Use](#use)
+* [API](#api)
+  * [`buildJsx(tree[, options])`](#buildjsxtree-options)
+  * [`Options`](#options)
+  * [`Runtime`](#runtime-1)
+* [Examples](#examples)
+  * [Example: use with Acorn](#example-use-with-acorn)
+* [Types](#types)
+* [Compatibility](#compatibility)
+* [Related](#related)
+* [Security](#security)
+* [Contribute](#contribute)
+* [License](#license)
 
 ## What is this?
 
@@ -137,18 +137,18 @@ they work on slightly different syntax trees.
 
 Some differences:
 
-*   no pure annotations things
-*   `this` is not a component: `<this>` -> `h('this')`, not `h(this)`
-*   namespaces are supported: `<a:b c:d>` -> `h('a:b', {'c:d': true})`,
-    which throws by default in Babel or can be turned on with `throwIfNamespace`
-*   no `useSpread`, `useBuiltIns`, or `filter` options
+* no pure annotations things
+* `this` is not a component: `<this>` -> `h('this')`, not `h(this)`
+* namespaces are supported: `<a:b c:d>` -> `h('a:b', {'c:d': true})`,
+  which throws by default in Babel or can be turned on with `throwIfNamespace`
+* no `useSpread`, `useBuiltIns`, or `filter` options
 
 ###### Parameters
 
-*   `tree` ([`Node`][node])
-    — tree to transform (typically [`Program`][program])
-*   `options` ([`Options`][api-options], optional)
-    — configuration
+* `tree` ([`Node`][node])
+  — tree to transform (typically [`Program`][program])
+* `options` ([`Options`][api-options], optional)
+  — configuration
 
 ###### Returns
 
@@ -264,11 +264,11 @@ compatible with Node.js 166.
 
 ## Related
 
-*   [`syntax-tree/hast-util-to-estree`](https://github.com/syntax-tree/hast-util-to-estree)
-    — turn [hast](https://github.com/syntax-tree/hast) (HTML) to [estree][]
-    JSX
-*   [`coderaiser/estree-to-babel`](https://github.com/coderaiser/estree-to-babel)
-    — turn [estree][] to Babel trees
+* [`syntax-tree/hast-util-to-estree`](https://github.com/syntax-tree/hast-util-to-estree)
+  — turn [hast](https://github.com/syntax-tree/hast) (HTML) to [estree][]
+  JSX
+* [`coderaiser/estree-to-babel`](https://github.com/coderaiser/estree-to-babel)
+  — turn [estree][] to Babel trees
 
 ## Security
 
