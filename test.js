@@ -1,8 +1,5 @@
 /**
- * @typedef {import('estree-jsx').Comment} Comment
- * @typedef {import('estree-jsx').Expression} Expression
- * @typedef {import('estree-jsx').Program} Program
- * @typedef {import('estree-jsx').Node} Node
+ * @import {Comment, Expression, Program, Node} from 'estree-jsx'
  */
 
 import assert from 'node:assert/strict'
