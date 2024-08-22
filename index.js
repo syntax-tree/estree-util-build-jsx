@@ -1,6 +1,2 @@
-/**
- * @typedef {import('./lib/index.js').Options} Options
- * @typedef {import('./lib/index.js').Runtime} Runtime
- */
-
+// Note: types exposed from `index.d.ts`.
 export {buildJsx} from './lib/index.js'
